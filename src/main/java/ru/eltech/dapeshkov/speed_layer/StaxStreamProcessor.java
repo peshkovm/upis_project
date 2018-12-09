@@ -3,37 +3,48 @@ package ru.eltech.dapeshkov.speed_layer;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
-public class StaxStreamProcessor {
+class StaxStreamProcessor {
     private static final XMLInputFactory FACTORY = XMLInputFactory.newInstance();
 
-    public static void parse(InputStream is, OutputStream out) {
-        try {
+    static void parse(InputStream is, String file) {
+        XMLStreamReader reader = null;
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file))) {
             System.out.println(Thread.currentThread().getId());
             if (is != null) {
-                XMLStreamReader reader = FACTORY.createXMLStreamReader(is);
-                boolean flag = false;
-                while (reader.hasNext()) {       // while not end of XML
-                    int event = reader.next();   // read next event
-                    if (event == XMLStreamReader.START_ELEMENT && "item".equals(reader.getLocalName())) {
-                        flag = true;
-                    }
-                    if (event == XMLStreamReader.START_ELEMENT && flag && ("title".equals(reader.getLocalName()) || "link".equals(reader.getLocalName())
-                            || "description".equals(reader.getLocalName()) || "category".equals(reader.getLocalName()))) {
-                        out.write((reader.getLocalName() + " " + reader.getElementText() + System.lineSeparator()).getBytes());
-                    }
-                    if (event == XMLStreamReader.END_ELEMENT && "item".equals(reader.getLocalName())) {
-                        out.write(System.lineSeparator().getBytes());
-                        flag = false;
+                reader = FACTORY.createXMLStreamReader(is);
+                while (reader.hasNext()) {
+                    String str = getElement(reader, "item");
+                    if (str != null) {
+                        bufferedWriter.write(str + "\n" + "\n");
+                        bufferedWriter.flush();
                     }
                 }
-                reader.close();
             }
         } catch (XMLStreamException | IOException e) {
             e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (XMLStreamException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+    }
+
+    private static String getElement(XMLStreamReader reader, String element) throws XMLStreamException {
+        StringBuilder str = new StringBuilder();
+        while (reader.hasNext() && (reader.next() != XMLStreamReader.START_ELEMENT || !reader.getLocalName().equals(element))) {
+        }
+
+        while (reader.hasNext() && (reader.next() != XMLStreamReader.END_ELEMENT || !reader.getLocalName().equals(element))) {
+            if (reader.getEventType() == XMLStreamReader.START_ELEMENT) {
+                str.append(reader.getLocalName()).append(" ").append(reader.getElementText()).append("\n");
+            }
+        }
+        return str.length() == 0 ? null : str.deleteCharAt(str.length() - 1).toString();
     }
 }
