@@ -16,14 +16,14 @@ public class RSSReader {
 
     /**
      * A pair of two {@link String} that is used to represent an file name and an URL name for the RSS.
-     * This class is used to be a parameter for {@link RSSReader() constructor} so the number of resources and output files are the same.
+     * This class is used to be a parameter for {@link RSSReader constructor} so the number of resources and output files are the same.
      */
     static public class URLFilePair {
         private final String file;
         private final String url;
 
         /**
-         * Initialize the instance of {@code URLFilePair}.
+         * Initializes the instance of {@code URLFilePair}.
          * @param file output file name
          * @param url URL of the RSS*/
 
@@ -54,7 +54,7 @@ public class RSSReader {
      * This method requests all given RSS and outputs the contents to the given files.
      * Most of the time this method should be invoked only once.
      * Method works as a service running all the time with 3 second interval
-     * @implNote {@link ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit) is used}*/
+     */
 
     public void start() {
         for (URLFilePair a : array) {

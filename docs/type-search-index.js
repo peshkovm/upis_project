@@ -1,0 +1,1 @@
+typeSearchIndex = [{"p":"ru.eltech.dapeshkov.speed_layer","l":"Main"},{"p":"ru.eltech.dapeshkov.speed_layer","l":"RSSReader"},{"p":"ru.eltech.dapeshkov.speed_layer","l":"RSSReader.URLFilePair"}]
