@@ -2,21 +2,19 @@ package ru.eltech.dapeshkov.speed_layer;
 
 import ru.eltech.dapeshkov.speed_layer.RSSReader.URLFilePair;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.events.XMLEvent;
-import java.io.*;
-import java.net.*;
-import java.util.List;
-import java.util.Map;
+/**
+ * This is a test class
+ */
 
 public class Main {
     public static void main(String[] args) {
-        RSSReader rssreader = new RSSReader(new URLFilePair("out1.txt", "http://www.kommersant.ru/rss/money.xml"),
-                new URLFilePair("out2.txt", "https://www.kommersant.ru/RSS/section-politics.xml"));
+        RSSReader rssreader = new RSSReader(
+                new URLFilePair("out1.txt", "https://news.yandex.ru/politics.rss"),
+                new URLFilePair("out2.txt", "https://news.yandex.ru/energy.rss"),
+                new URLFilePair("out3.txt", "https://news.yandex.ru/business.rss"),
+                new URLFilePair("out4.txt", "https://news.yandex.ru/index.rss"),
+                new URLFilePair("out5.txt", "https://news.yandex.ru/finances.rss")
+        );
         rssreader.start();
     }
 }

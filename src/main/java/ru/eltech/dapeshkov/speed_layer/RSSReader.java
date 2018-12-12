@@ -1,76 +1,68 @@
 package ru.eltech.dapeshkov.speed_layer;
 
-import javax.xml.stream.XMLStreamException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.*;
-import java.util.stream.IntStream;
+
+/**
+ * This class reads RSS from given URLs and outputs the item contents in the files.
+ * After invocation of method {@link #start() start()} it outputs all contents of all RSS to the files, then it will output only newly added items when RSS are updated.
+ * This program requests RSS every 3 seconds.
+ *
+ * @author Peshkov Denis.
+ */
 
 public class RSSReader {
-    private final RSS[] rss;
     private final URLFilePair[] array;
     private final ScheduledExecutorService ex = Executors.newScheduledThreadPool(4);
 
+    /**
+     * A pair of two {@link String} that is used to represent an file name and an URL name for the RSS.
+     * This class is used to be a parameter for {@link RSSReader() constructor} so the number of resources and output files are the same.
+     */
     static public class URLFilePair {
         private final String file;
         private final String url;
+
+        /**
+         * Initialize the instance of {@code URLFilePair}.
+         * @param file output file name
+         * @param url URL of the RSS*/
 
         public URLFilePair(String file, String url) {
             this.file = file;
             this.url = url;
         }
 
-        public String getFile() {
+        private String getFile() {
             return file;
         }
 
-        public String getUrl() {
+        private String getUrl() {
             return url;
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            URLFilePair that = (URLFilePair) o;
-            return Objects.equals(getFile(), that.getFile()) &&
-                    Objects.equals(getUrl(), that.getUrl());
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(getFile(), getUrl());
-        }
-
-        @Override
-        public String toString() {
-            return "URLFilePair{" +
-                    "file='" + file + '\'' +
-                    ", url='" + url + '\'' +
-                    '}';
-        }
     }
+
+    /**
+     * Initialize the instance of {@code RSSReader}.
+     * @param mas the array of {@link URLFilePair}
+     */
 
     public RSSReader(URLFilePair... mas) {
         array = mas;
-        rss = new RSS[mas.length];
-        for (int i = 0; i < mas.length; i++) {
-            rss[i] = new RSS(mas[i].getUrl());
-        }
     }
 
+    /**
+     * This method requests all given RSS and outputs the contents to the given files.
+     * Most of the time this method should be invoked only once.
+     * Method works as a service running all the time with 3 second interval
+     * @implNote {@link ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit) is used}*/
+
     public void start() {
-        for (int i = 0; i < rss.length; i++) {
-            int finalI = i;
+        for (URLFilePair a : array) {
+            RSS rss = new RSS(a.getUrl());
+            StaxStreamProcessor processor = new StaxStreamProcessor();
             ex.scheduleAtFixedRate(() -> {
-                try {
-                    StaxStreamProcessor.parse(rss[finalI].get(), array[finalI].getFile());
-                } finally {
-                    rss[finalI].close();
+                try (rss) {
+                    processor.parse(rss.get(), a.getFile());
                 }
             }, 0, 3, TimeUnit.SECONDS);
         }
