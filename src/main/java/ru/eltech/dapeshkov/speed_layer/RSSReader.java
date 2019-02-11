@@ -23,7 +23,7 @@ public class RSSReader {
         private final String url;
 
         /**
-         * Initialize the instance of {@code URLFilePair}.
+         * Initializes the instance of {@code URLFilePair}.
          * @param file output file name
          * @param url URL of the RSS*/
 
