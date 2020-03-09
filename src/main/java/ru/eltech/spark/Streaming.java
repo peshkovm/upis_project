@@ -17,7 +17,13 @@ public class Streaming {
         SparkConf conf = new SparkConf().setMaster("local").setAppName("NetworkWordCount");
         JavaStreamingContext jssc = new JavaStreamingContext(conf, Durations.seconds(1));
         JavaDStream<String> lines = jssc.textFileStream("files");
-        lines.foreachRDD(System.out::println);
+        lines.foreachRDD(rdd -> {
+            if (!rdd.isEmpty()) {
+                rdd.foreach(s -> System.out.println(s));
+            } else {
+                System.out.println("empty");
+            }
+        });
 
         jssc.start();
         try {
