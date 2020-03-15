@@ -98,7 +98,7 @@ public class Processing {
 
         JSONProcessor.Train[] arr = null;
 
-        try (FileInputStream in = new FileInputStream("Denis/train.json")) {
+        try (FileInputStream in = new FileInputStream("Denis/train1.json")) {
             arr = JSONProcessor.parse(in, JSONProcessor.Train[].class);
         } catch (IOException e) {
             e.printStackTrace();
@@ -129,5 +129,7 @@ public class Processing {
     }
 
     public static void main(final String[] args) {
+        train(2);
+        System.out.println(sentiment("Банк потерял огромную сумму денег"));
     }
 }

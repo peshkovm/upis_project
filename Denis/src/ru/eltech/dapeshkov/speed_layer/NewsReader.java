@@ -65,7 +65,7 @@ public class NewsReader {
                         if (news != null && (lastpubdate == null || news.getItems()[0].getPublish_date().isAfter(lastpubdate))) {
                             lastpubdate = news.getItems()[0].getPublish_date();
                             final Item item = new Item(Processing.sentiment(news.getItems()[0].toString()), a, ApiUtils.AlphaVantageParser.getLatestStock(a).getChange());
-                            write(JSONProcessor.write(item) + "/n", new FileOutputStream(out + i.incrementAndGet() + ".txt"));
+                            write(JSONProcessor.write(item) + "\n", new FileOutputStream(out + i.incrementAndGet() + ".txt"));
                         }
                     } catch (Throwable e) {
                         e.printStackTrace();

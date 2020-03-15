@@ -30,7 +30,6 @@ public class Batch {
             SparkSession session = SparkSession.builder().sparkContext(lengths.context()).getOrCreate();
             Dataset<Row> dataset = session.createDataFrame(lengths, Int.class);
             dataset.show();
-            dataset.write().json("./asasas/");
         }
     }
 
