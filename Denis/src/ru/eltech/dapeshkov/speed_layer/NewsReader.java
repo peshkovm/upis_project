@@ -1,10 +1,10 @@
 package ru.eltech.dapeshkov.speed_layer;
 
 import ru.eltech.dapeshkov.classifier.Processing;
+import ru.eltech.mapeshkov.ApiUtils;
 
 import java.io.*;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +64,7 @@ public class NewsReader {
                         final JSONProcessor.News news = JSONProcessor.parse(con.get(), JSONProcessor.News.class);
                         if (news != null && (lastpubdate == null || news.getItems()[0].getPublish_date().isAfter(lastpubdate))) {
                             lastpubdate = news.getItems()[0].getPublish_date();
-                            final Item item = new Item(news.getItems()[0].toString(), Processing.sentiment(news.getItems()[0].toString()), a);
+                            final Item item = new Item(Processing.sentiment(news.getItems()[0].toString()), a, ApiUtils.AlphaVantageParser.getLatestStock(a).getChange());
                             write(JSONProcessor.write(item) + "/n", new FileOutputStream(out + i.incrementAndGet() + ".txt"));
                         }
                     } catch (Throwable e) {
@@ -76,62 +76,47 @@ public class NewsReader {
     }
 
     public static class Item {
-        private String news;
         private String sentiment;
         private String company_name;
+        private double stock;
+
+        public Item(String sentiment, String company_name, Double stock) {
+            this.sentiment = sentiment;
+            this.company_name = company_name;
+            this.stock = stock;
+        }
 
         @Override
         public String toString() {
             return "Item{" +
-                    "news='" + news + '\'' +
-                    ", sentiment='" + sentiment + '\'' +
+                    "sentiment='" + sentiment + '\'' +
                     ", company_name='" + company_name + '\'' +
+                    ", stock=" + stock +
                     '}';
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final Item item = (Item) o;
-            return Objects.equals(news, item.news) &&
-                    Objects.equals(sentiment, item.sentiment) &&
-                    Objects.equals(company_name, item.company_name);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(news, sentiment, company_name);
-        }
-
-        public Item(final String news, final String sentiment, final String company_name) {
-            this.news = news;
-            this.sentiment = sentiment;
-            this.company_name = company_name;
-        }
-
-        public void setNews(final String news) {
-            this.news = news;
-        }
-
-        public void setSentiment(final String sentiment) {
-            this.sentiment = sentiment;
-        }
-
-        public void setCompany_name(final String company_name) {
-            this.company_name = company_name;
-        }
-
-        public String getNews() {
-            return news;
         }
 
         public String getSentiment() {
             return sentiment;
         }
 
+        public void setSentiment(String sentiment) {
+            this.sentiment = sentiment;
+        }
+
         public String getCompany_name() {
             return company_name;
+        }
+
+        public void setCompany_name(String company_name) {
+            this.company_name = company_name;
+        }
+
+        public Double getStock() {
+            return stock;
+        }
+
+        public void setStock(Double stock) {
+            this.stock = stock;
         }
     }
 }
