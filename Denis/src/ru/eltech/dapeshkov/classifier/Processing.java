@@ -2,10 +2,10 @@ package ru.eltech.dapeshkov.classifier;
 
 import ru.eltech.dapeshkov.speed_layer.JSONProcessor;
 
-import java.io.FileInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -20,10 +20,8 @@ public class Processing {
     static final private String[] category = {"positive", "negative", "neutral"};
 
     static {
-        try (Stream<String> lines = Files.lines(Paths.get("Denis/stopwatch.txt"))) {
+        try (Stream<String> lines = new BufferedReader(new InputStreamReader(Processing.class.getResourceAsStream("Resources/stopwatch.txt"))).lines()) {
             lines.forEach(hash::add);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -98,7 +96,7 @@ public class Processing {
 
         JSONProcessor.Train[] arr = null;
 
-        try (FileInputStream in = new FileInputStream("Denis/train1.json")) {
+        try (InputStream in = Processing.class.getResourceAsStream("Resources/train1.json")) {
             arr = JSONProcessor.parse(in, JSONProcessor.Train[].class);
         } catch (IOException e) {
             e.printStackTrace();
@@ -129,7 +127,5 @@ public class Processing {
     }
 
     public static void main(final String[] args) {
-        train(2);
-        System.out.println(sentiment("Банк потерял огромную сумму денег"));
     }
 }

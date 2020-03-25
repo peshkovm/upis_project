@@ -64,8 +64,8 @@ public class NewsReader {
                         final JSONProcessor.News news = JSONProcessor.parse(con.get(), JSONProcessor.News.class);
                         if (news != null && (lastpubdate == null || news.getItems()[0].getPublish_date().isAfter(lastpubdate))) {
                             lastpubdate = news.getItems()[0].getPublish_date();
-                            final Item item = new Item(Processing.sentiment(news.getItems()[0].toString()), a, ApiUtils.AlphaVantageParser.getLatestStock(a).getChange());
-                            write(JSONProcessor.write(item) + "\n", new FileOutputStream(out + i.incrementAndGet() + ".txt"));
+                            final Item item = new Item(Processing.sentiment(news.getItems()[0].toString()), a, ApiUtils.AlphaVantageParser.getLatestStock(a).getChange(), lastpubdate.getYear(), lastpubdate.getMonthValue(), lastpubdate.getDayOfMonth());
+                            write(item.toString(), new FileOutputStream(out + i.incrementAndGet() + ".txt"));
                         }
                     } catch (Throwable e) {
                         e.printStackTrace();
@@ -79,20 +79,22 @@ public class NewsReader {
         private String sentiment;
         private String company_name;
         private double stock;
+        private int year;
+        private int month;
+        private int day;
 
-        public Item(String sentiment, String company_name, Double stock) {
+        public Item(String sentiment, String company_name, Double stock, int year, int month, int day) {
             this.sentiment = sentiment;
             this.company_name = company_name;
             this.stock = stock;
+            this.year = year;
+            this.month = month;
+            this.day = day;
         }
 
         @Override
         public String toString() {
-            return "Item{" +
-                    "sentiment='" + sentiment + '\'' +
-                    ", company_name='" + company_name + '\'' +
-                    ", stock=" + stock +
-                    '}';
+            return getCompany_name() + "," + getSentiment() + "," + getYear() + "," + getMonth() + "," + getDay() + "," + getStock();
         }
 
         public String getSentiment() {
@@ -117,6 +119,30 @@ public class NewsReader {
 
         public void setStock(Double stock) {
             this.stock = stock;
+        }
+
+        public int getYear() {
+            return year;
+        }
+
+        public void setYear(int year) {
+            this.year = year;
+        }
+
+        public int getMonth() {
+            return month;
+        }
+
+        public void setMonth(int month) {
+            this.month = month;
+        }
+
+        public int getDay() {
+            return day;
+        }
+
+        public void setDay(int day) {
+            this.day = day;
         }
     }
 }
