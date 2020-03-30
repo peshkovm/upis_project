@@ -16,6 +16,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 public class CombinedPlot extends ApplicationFrame {
@@ -69,9 +70,13 @@ public class CombinedPlot extends ApplicationFrame {
         List<Row> rows = rowDataset.collectAsList();
         final int[] i = {1};
 
+        String[] columns = rowDataset.columns();
+        int labelIndex = Arrays.asList(columns).indexOf("label");
+        int predictionIndex = Arrays.asList(columns).indexOf("prediction");
+
         rows.forEach(row -> {
-            String label = row.mkString(";").split(";")[6];
-            String prediction = row.mkString(";").split(";")[10];
+            String label = row.mkString(";").split(";")[labelIndex];
+            String prediction = row.mkString(";").split(";")[predictionIndex];
             double predictionDouble = Double.parseDouble(prediction);
 
             if (!label.equals("null")) {

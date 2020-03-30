@@ -5,10 +5,17 @@ import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import java.util.Arrays;
+
 public class MyEvaluator extends Evaluator {
     @Override
     public double evaluate(Dataset<?> dataset) {
         Dataset<Row> rowDataset = dataset.toDF();
+
+        String[] columns = rowDataset.columns();
+        int labelIndex = Arrays.asList(columns).indexOf("label");
+        int predictionIndex = Arrays.asList(columns).indexOf("prediction");
+
         //double[] accuracyError = {0.0};
         //final long datasetSize = rowDataset.count();
 
@@ -26,14 +33,14 @@ public class MyEvaluator extends Evaluator {
         });*/
 
         double error = rowDataset.toJavaRDD().filter(row -> {
-                    String label = row.mkString(";").split(";")[6];
+                    String label = row.mkString(";").split(";")[labelIndex];
                     return !label.equals("null");
                 }
         ).map(row -> {
-            String label = row.mkString(";").split(";")[6];
+            String label = row.mkString(";").split(";")[labelIndex];
             double labelDouble = 0;
             labelDouble = Double.parseDouble(label);
-            String prediction = row.mkString(";").split(";")[10];
+            String prediction = row.mkString(";").split(";")[predictionIndex];
             double predictionDouble;
             predictionDouble = Double.parseDouble(prediction);
 
