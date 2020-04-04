@@ -162,11 +162,17 @@ public class PredictionUtils {
 
         Evaluator evaluator = new MyEvaluator();
 
+        //lr
         ParamMap[] paramGrid = new ParamGridBuilder()
                 .addGrid(lr.maxIter(), new int[]{10, 1000})
                 .addGrid(lr.regParam(), new double[]{0, 0.001})
                 .addGrid(lr.elasticNetParam(), new double[]{0, 0.5, 1})
                 .build();
+
+        //gbt
+/*        ParamMap[] paramGrid = new ParamGridBuilder()
+                .addGrid(gbt.maxIter(), new int[]{10, 30, 50})
+                .build();*/
 
         CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)

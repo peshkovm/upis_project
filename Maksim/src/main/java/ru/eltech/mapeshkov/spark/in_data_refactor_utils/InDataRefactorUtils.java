@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class InDataRefactorUtils {
 
@@ -19,12 +20,41 @@ public class InDataRefactorUtils {
     private InDataRefactorUtils() {
     }
 
-    public static Dataset<Row> reformatNotLabeledDataToLabeled(SparkSession spark, Dataset<Row> datasetNotLabeled) {
-        datasetNotLabeled = datasetNotLabeled.withColumn("label", functions.lit(-1.0));
-        String[] columns = datasetNotLabeled.columns();
+    public static Dataset<Row> sortByDate(final SparkSession spark, final Dataset<Row> dataset, final StructType schema) {
+        List<Row> rows = dataset.collectAsList();
+        String[] columns = dataset.columns();
+
+        rows = rows.stream().sorted((row1, row2) -> {
+            int yearIndex = Arrays.asList(columns).indexOf("year");
+            int monthIndex = Arrays.asList(columns).indexOf("month");
+            int dayIndex = Arrays.asList(columns).indexOf("day");
+
+            String[] split1 = row1.mkString(",").split(",");
+            String[] split2 = row2.mkString(",").split(",");
+
+            int year1 = Integer.parseInt(split1[yearIndex]);
+            int year2 = Integer.parseInt(split2[yearIndex]);
+            int month1 = Integer.parseInt(split1[monthIndex]);
+            int month2 = Integer.parseInt(split2[monthIndex]);
+            int day1 = Integer.parseInt(split1[dayIndex]);
+            int day2 = Integer.parseInt(split2[dayIndex]);
+
+            int date1 = year1 * 10_000 + month1 * 100 + day1;
+            int date2 = year2 * 10_000 + month2 * 100 + day2;
+
+            return date1 - date2;
+        }).collect(Collectors.toList());
+
+        return spark.createDataFrame(rows, schema);
+    }
+
+    public static Dataset<Row> reformatNotLabeledDataToLabeled(final SparkSession spark, final Dataset<Row> datasetNotLabeled) {
+        Dataset<Row> datasetNotLabeledCopy = datasetNotLabeled.toDF();
+        datasetNotLabeledCopy = datasetNotLabeledCopy.withColumn("label", functions.lit(-1.0));
+        String[] columns = datasetNotLabeledCopy.columns();
         int today_stockIndex = Arrays.asList(columns).indexOf("today_stock");
         int labelIndex = Arrays.asList(columns).indexOf("label");
-        List<Row> rows = datasetNotLabeled.collectAsList();
+        List<Row> rows = datasetNotLabeledCopy.collectAsList();
 
         for (int rowNum = 1; rowNum < rows.size(); rowNum++) {
             Row rowTomorrow = rows.get(rowNum);
@@ -71,7 +101,7 @@ public class InDataRefactorUtils {
         return datasetLabeled;
     }
 
-    public static Dataset<Row> reformatInDataToSlidingWindowLayout(SparkSession spark, Dataset<Row> datasetNotWindowed, int windowWidth) {
+    public static Dataset<Row> reformatInDataToSlidingWindowLayout(final SparkSession spark, final Dataset<Row> datasetNotWindowed, int windowWidth) {
         class WindowDataPair {
             private String sentiment = "";
             private double stock;

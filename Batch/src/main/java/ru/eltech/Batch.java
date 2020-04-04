@@ -75,33 +75,9 @@ public class Batch {
 
             trainingDatasetNotLabeled.show();
 
-            String[] columns = trainingDatasetNotLabeled.columns();
-            List<Row> rowsNotLabeled = trainingDatasetNotLabeled.collectAsList();
+            Dataset<Row> trainingDatasetNotLabeledSorted = InDataRefactorUtils.sortByDate(spark, trainingDatasetNotLabeled, schemaNotLabeled);
 
-            rowsNotLabeled = rowsNotLabeled.stream().sorted((row1, row2) -> {
-                int yearIndex = Arrays.asList(columns).indexOf("year");
-                int monthIndex = Arrays.asList(columns).indexOf("month");
-                int dayIndex = Arrays.asList(columns).indexOf("day");
-
-                String[] split1 = row1.mkString(",").split(",");
-                String[] split2 = row2.mkString(",").split(",");
-
-                int year1 = Integer.parseInt(split1[yearIndex]);
-                int year2 = Integer.parseInt(split2[yearIndex]);
-                int month1 = Integer.parseInt(split1[monthIndex]);
-                int month2 = Integer.parseInt(split2[monthIndex]);
-                int day1 = Integer.parseInt(split1[dayIndex]);
-                int day2 = Integer.parseInt(split2[dayIndex]);
-
-                int date1 = year1 * 10_000 + month1 * 100 + day1;
-                int date2 = year2 * 10_000 + month2 * 100 + day2;
-
-                return date1 - date2;
-            }).collect(Collectors.toList());
-
-            trainingDatasetNotLabeled = spark.createDataFrame(rowsNotLabeled, schemaNotLabeled);
-
-            Dataset<Row> trainingDatasetLabeled = InDataRefactorUtils.reformatNotLabeledDataToLabeled(spark, trainingDatasetNotLabeled);
+            Dataset<Row> trainingDatasetLabeled = InDataRefactorUtils.reformatNotLabeledDataToLabeled(spark, trainingDatasetNotLabeledSorted);
 
             trainingDatasetLabeled.printSchema();
             trainingDatasetLabeled.show();
@@ -115,11 +91,11 @@ public class Batch {
 
             Model<?> trainedModel = PredictionUtils.trainSlidingWindowModel(trainingDatasetWindowed, 5, logWriter);
 
-            if (trainedModel instanceof PipelineModel) {
+          /*  if (trainedModel instanceof PipelineModel) {
                 ((PipelineModel) trainedModel).write().overwrite().save("C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\outModel");
-            }
+            }*/
 
-            //PredictionUtils.predict(trainedModel, trainingDatasetWindowed, logWriter);
+            PredictionUtils.predict(trainedModel, trainingDatasetWindowed, logWriter);
             //modelOutStream.writeObject(trainedModel);
             //}
         } catch (IOException e) {
