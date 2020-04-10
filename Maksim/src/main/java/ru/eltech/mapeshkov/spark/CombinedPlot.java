@@ -20,84 +20,74 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CombinedPlot extends ApplicationFrame {
-    /**
-     * Constructs a new application frame.
-     *
-     * @param title the frame title.
-     */
-    public CombinedPlot(String title, Dataset<Row> rowDataset) {
-        this(title, rowDataset, 500, 300);
-    }
+  /**
+   * Constructs a new application frame.
+   *
+   * @param title the frame title.
+   */
+  public CombinedPlot(String title, Dataset<Row> rowDataset) {
+    this(title, rowDataset, 500, 300);
+  }
 
-    public CombinedPlot(String title, Dataset<Row> rowDataset, int width, int height) {
-        super(title);
-        final JFreeChart chart = createCombinedChart(rowDataset);
-        final ChartPanel panel = new ChartPanel(chart,
-                true,
-                true,
-                true,
-                false,
-                true);
-        panel.setPreferredSize(new Dimension(width, height));
-        setContentPane(panel);
-    }
+  public CombinedPlot(String title, Dataset<Row> rowDataset, int width, int height) {
+    super(title);
+    final JFreeChart chart = createCombinedChart(rowDataset);
+    final ChartPanel panel = new ChartPanel(chart, true, true, true, false, true);
+    panel.setPreferredSize(new Dimension(width, height));
+    setContentPane(panel);
+  }
 
-    private JFreeChart createCombinedChart(Dataset<Row> rowDataset) {
-        final XYDataset data1 = createPlotDataset(rowDataset);
-        final StandardXYItemRenderer renderer = new StandardXYItemRenderer();
-        renderer.setBaseShapesVisible(true);
-        renderer.setDefaultItemLabelGenerator(new StandardXYItemLabelGenerator());
-        final org.jfree.chart.axis.NumberAxis rangeAxis = new org.jfree.chart.axis.NumberAxis("label");
-        final org.jfree.chart.axis.NumberAxis domainAxis = new org.jfree.chart.axis.NumberAxis("date");
-        final XYPlot subplot = new XYPlot(data1, domainAxis, rangeAxis, renderer);
+  private JFreeChart createCombinedChart(Dataset<Row> rowDataset) {
+    final XYDataset data1 = createPlotDataset(rowDataset);
+    final StandardXYItemRenderer renderer = new StandardXYItemRenderer();
+    renderer.setBaseShapesVisible(true);
+    renderer.setDefaultItemLabelGenerator(new StandardXYItemLabelGenerator());
+    final org.jfree.chart.axis.NumberAxis rangeAxis = new org.jfree.chart.axis.NumberAxis("label");
+    final org.jfree.chart.axis.NumberAxis domainAxis = new org.jfree.chart.axis.NumberAxis("date");
+    final XYPlot subplot = new XYPlot(data1, domainAxis, rangeAxis, renderer);
 
-        final CombinedDomainXYPlot plot = new CombinedDomainXYPlot();
+    final CombinedDomainXYPlot plot = new CombinedDomainXYPlot();
 
-        plot.add(subplot);
-        plot.setOrientation(PlotOrientation.VERTICAL);
+    plot.add(subplot);
+    plot.setOrientation(PlotOrientation.VERTICAL);
 
-        return new JFreeChart("Plot",
-                JFreeChart.DEFAULT_TITLE_FONT,
-                plot,
-                true);
-    }
+    return new JFreeChart("Plot", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
+  }
 
-    private XYDataset createPlotDataset(Dataset<Row> rowDataset) {
-        final XYSeries labelSeries = new XYSeries("label");
-        final XYSeries errorSeries = new XYSeries("old prediction");
-        final XYSeries predictionSeries = new XYSeries("new prediction");
+  private XYDataset createPlotDataset(Dataset<Row> rowDataset) {
+    final XYSeries labelSeries = new XYSeries("label");
+    final XYSeries errorSeries = new XYSeries("old prediction");
+    final XYSeries predictionSeries = new XYSeries("new prediction");
 
-        List<Row> rows = rowDataset.collectAsList();
-        final int[] i = {1};
+    List<Row> rows = rowDataset.collectAsList();
+    final int[] i = {1};
 
-        String[] columns = rowDataset.columns();
-        int labelIndex = Arrays.asList(columns).indexOf("label");
-        int predictionIndex = Arrays.asList(columns).indexOf("prediction");
+    String[] columns = rowDataset.columns();
+    int labelIndex = Arrays.asList(columns).indexOf("label");
+    int predictionIndex = Arrays.asList(columns).indexOf("prediction");
 
-        rows.forEach(row -> {
-            String label = row.mkString(";").split(";")[labelIndex];
-            String prediction = row.mkString(";").split(";")[predictionIndex];
-            double predictionDouble = Double.parseDouble(prediction);
+    rows.forEach(
+        row -> {
+          String label = row.mkString(";").split(";")[labelIndex];
+          String prediction = row.mkString(";").split(";")[predictionIndex];
+          double predictionDouble = Double.parseDouble(prediction);
 
-            if (!label.equals("null")) {
-                double labelDouble = Double.parseDouble(label);
-                //double error = Math.abs(predictionDouble - labelDouble);
+          if (!label.equals("null")) {
+            double labelDouble = Double.parseDouble(label);
+            // double error = Math.abs(predictionDouble - labelDouble);
 
-                labelSeries.add(i[0], labelDouble);
-                errorSeries.add(i[0]++, predictionDouble);
-            } else
-                predictionSeries.add(i[0]++, predictionDouble);
+            labelSeries.add(i[0], labelDouble);
+            errorSeries.add(i[0]++, predictionDouble);
+          } else predictionSeries.add(i[0]++, predictionDouble);
         });
 
-        final XYSeriesCollection collection = new XYSeriesCollection();
-        collection.addSeries(labelSeries);
-        collection.addSeries(errorSeries);
-        collection.addSeries(predictionSeries);
+    final XYSeriesCollection collection = new XYSeriesCollection();
+    collection.addSeries(labelSeries);
+    collection.addSeries(errorSeries);
+    collection.addSeries(predictionSeries);
 
-        return collection;
-    }
+    return collection;
+  }
 
-    private static class LabeledXYDataset extends AbstractDataset {
-
-    }
+  private static class LabeledXYDataset extends AbstractDataset {}
 }

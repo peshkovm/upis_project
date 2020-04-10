@@ -5,82 +5,97 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 public class StockInfoDaily {
-    @JsonProperty("1. open")
-    private double open;
-    @JsonProperty("2. high")
-    private double high;
-    @JsonProperty("3. low")
-    private double low;
-    @JsonProperty("4. close")
-    private double close;
-    @JsonProperty("5. volume")
-    private int volume;
+  @JsonProperty("1. open")
+  private double open;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        StockInfoDaily that = (StockInfoDaily) o;
-        return Double.compare(that.getOpen(), getOpen()) == 0 &&
-                Double.compare(that.getHigh(), getHigh()) == 0 &&
-                Double.compare(that.getLow(), getLow()) == 0 &&
-                Double.compare(that.getClose(), getClose()) == 0 &&
-                getVolume() == that.getVolume();
-    }
+  @JsonProperty("2. high")
+  private double high;
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getOpen(), getHigh(), getLow(), getClose(), getVolume());
-    }
+  @JsonProperty("3. low")
+  private double low;
 
-    @Override
-    public String toString() {
-        return "StockInfoDaily{" + '\n' +
-                "open: " + open + '\n' +
-                "high: " + high + '\n' +
-                "low: " + low + '\n' +
-                "close: " + close + '\n' +
-                "volume: " + volume + '\n' +
-                '}';
-    }
+  @JsonProperty("4. close")
+  private double close;
 
-    public double getOpen() {
-        return open;
-    }
+  @JsonProperty("5. volume")
+  private int volume;
 
-    public double getHigh() {
-        return high;
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    StockInfoDaily that = (StockInfoDaily) o;
+    return Double.compare(that.getOpen(), getOpen()) == 0
+        && Double.compare(that.getHigh(), getHigh()) == 0
+        && Double.compare(that.getLow(), getLow()) == 0
+        && Double.compare(that.getClose(), getClose()) == 0
+        && getVolume() == that.getVolume();
+  }
 
-    public double getLow() {
-        return low;
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(getOpen(), getHigh(), getLow(), getClose(), getVolume());
+  }
 
-    public double getClose() {
-        return close;
-    }
+  @Override
+  public String toString() {
+    return "StockInfoDaily{"
+        + '\n'
+        + "open: "
+        + open
+        + '\n'
+        + "high: "
+        + high
+        + '\n'
+        + "low: "
+        + low
+        + '\n'
+        + "close: "
+        + close
+        + '\n'
+        + "volume: "
+        + volume
+        + '\n'
+        + '}';
+  }
 
-    public int getVolume() {
-        return volume;
-    }
+  public double getOpen() {
+    return open;
+  }
 
-    public void setOpen(double open) {
-        this.open = open;
-    }
+  public double getHigh() {
+    return high;
+  }
 
-    public void setHigh(double high) {
-        this.high = high;
-    }
+  public double getLow() {
+    return low;
+  }
 
-    public void setLow(double low) {
-        this.low = low;
-    }
+  public double getClose() {
+    return close;
+  }
 
-    public void setClose(double close) {
-        this.close = close;
-    }
+  public int getVolume() {
+    return volume;
+  }
 
-    public void setVolume(int volume) {
-        this.volume = volume;
-    }
+  public void setOpen(double open) {
+    this.open = open;
+  }
+
+  public void setHigh(double high) {
+    this.high = high;
+  }
+
+  public void setLow(double low) {
+    this.low = low;
+  }
+
+  public void setClose(double close) {
+    this.close = close;
+  }
+
+  public void setVolume(int volume) {
+    this.volume = volume;
+  }
 }
