@@ -17,3 +17,6 @@ buildNumber.properties
 out*.txt
 files/
 /Batch/src/test/resources/
+
+*.json
+*.txt

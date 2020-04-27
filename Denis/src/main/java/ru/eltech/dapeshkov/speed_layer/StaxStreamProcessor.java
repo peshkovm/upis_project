@@ -1,13 +1,16 @@
 package ru.eltech.dapeshkov.speed_layer;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 /**
  * This class is a parser of Connection. It outputs the contents of item to the files, also this
@@ -37,7 +40,7 @@ class StaxStreamProcessor {
             if (lastpubdate == null
                 || lastpubdate.isBefore(
                     pubdate)) { // if it is a new item (the date of the item is after the
-                                // lastpubdate)
+              // lastpubdate)
               if (time == null
                   || pubdate.isAfter(
                       time)) { // time will be the max date of the items in given Connection

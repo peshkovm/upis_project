@@ -1,12 +1,16 @@
 package ru.eltech;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.spark.SparkContext;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.ml.Model;
-import org.apache.spark.ml.PipelineModel;
-import org.apache.spark.ml.regression.LinearRegressionModel;
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
@@ -15,28 +19,13 @@ import ru.eltech.mapeshkov.spark.MyFileWriter;
 import ru.eltech.mapeshkov.spark.PredictionUtils;
 import ru.eltech.mapeshkov.spark.in_data_refactor_utils.InDataRefactorUtils;
 
-import javax.sql.rowset.RowSetFactory;
-import javax.xml.bind.SchemaOutputResolver;
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
 public class Batch {
 
   // Suppresses default constructor, ensuring non-instantiability.
   private Batch() {}
 
   public static void start() throws Exception {
-    System.setProperty("hadoop.home.dir", "C:\\winutils\\");
+    System.setProperty("hadoop.home.dir", "..\\winutils");
 
     SparkSession spark =
         SparkSession.builder()
@@ -50,8 +39,7 @@ public class Batch {
     // Create a Java version of the Spark Context
     JavaSparkContext sc = new JavaSparkContext(conf);
 
-    String companiesDirPath =
-        "C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\in files for prediction";
+    String companiesDirPath = ".\\Batch\\src\\test\\resources\\inFiles\\training\\";
 
     // for (; ; ) {
     List<Path> companyDirPathList =
@@ -79,7 +67,7 @@ public class Batch {
     MyFileWriter logWriter =
         new MyFileWriter(
             Paths.get(
-                "C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\outFiles\\"
+                ".\\Batch\\src\\test\\resources\\outFiles\\"
                     + companyDirPath.getFileName()
                     + "\\spark Ml out.txt"));
     long filesOldCount = 0, filesCount = 0;
@@ -100,7 +88,9 @@ public class Batch {
             .option("charset", "UTF-8")
             // .csv("C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\in files for
             // prediction\\" + companyDirPath.getFileName())
-            .csv("D:\\refactored\\" + companyDirPath.getFileName())
+            .csv(
+                ".\\Batch\\src\\test\\resources\\inFiles\\training\\"
+                    + companyDirPath.getFileName())
             .toDF("company", "sentiment", "date", "today_stock")
             .cache();
 
@@ -110,8 +100,12 @@ public class Batch {
     Dataset<Row> trainingDatasetNotLabeledSorted =
         InDataRefactorUtils.sortByDate(spark, trainingDatasetNotLabeled, schemaNotLabeled);
 
+    logWriter.printSchema(trainingDatasetNotLabeledSorted);
+    logWriter.show(trainingDatasetNotLabeledSorted);
+
     Dataset<Row> trainingDatasetLabeled =
-        InDataRefactorUtils.reformatNotLabeledDataToLabeled(spark, trainingDatasetNotLabeledSorted);
+        InDataRefactorUtils.reformatNotLabeledDataToLabeled(
+            spark, trainingDatasetNotLabeledSorted, true);
 
     logWriter.printSchema(trainingDatasetLabeled);
     logWriter.show(trainingDatasetLabeled);
@@ -130,6 +124,34 @@ public class Batch {
     /*        if (trainedModel instanceof PipelineModel) {
         ((PipelineModel) trainedModel).write().overwrite().save("C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\" + companyDirPath.getFileName() + "outModel");
     }*/
+
+    //////////////////////////////////
+    Dataset<Row> testingDatasetNotLabeled =
+        spark
+            .read()
+            .schema(schemaNotLabeled)
+            // .option("inferSchema", true)
+            // .option("header", true)л
+            .option("delimiter", ",")
+            .option("charset", "UTF-8")
+            // .csv("C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\in files for
+            // prediction\\" + companyDirPath.getFileName())
+            .csv(
+                ".\\Batch\\src\\test\\resources\\inFiles\\prediction\\"
+                    + companyDirPath.getFileName())
+            .toDF("company", "sentiment", "date", "today_stock")
+            .cache();
+    //////////////////////////////////
+
+    Dataset<Row> testingDataNotLabeledSorted =
+        InDataRefactorUtils.sortByDate(spark, testingDatasetNotLabeled, schemaNotLabeled);
+    Dataset<Row> testingDataLabeled =
+        InDataRefactorUtils.reformatNotLabeledDataToLabeled(
+            spark, testingDataNotLabeledSorted, false);
+    Dataset<Row> testingDataWindowed =
+        InDataRefactorUtils.reformatInDataToSlidingWindowLayout(spark, testingDataLabeled, 5);
+
+    PredictionUtils.predict(trainedModel, testingDataWindowed, logWriter);
 
     // PredictionUtils.predict(trainedModel, trainingDatasetWindowed, logWriter);
   }

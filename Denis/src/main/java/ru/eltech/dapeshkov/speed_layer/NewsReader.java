@@ -1,14 +1,17 @@
 package ru.eltech.dapeshkov.speed_layer;
 
-import ru.eltech.dapeshkov.classifier.Processing;
-import ru.eltech.mapeshkov.not_spark.ApiUtils;
-
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import ru.eltech.dapeshkov.classifier.Processing;
+import ru.eltech.mapeshkov.not_spark.ApiUtils;
 
 /**
  * This class reads content from given URLs and outputs the parsed content in the files. After

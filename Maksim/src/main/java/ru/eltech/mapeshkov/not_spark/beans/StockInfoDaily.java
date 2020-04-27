@@ -1,7 +1,6 @@
 package ru.eltech.mapeshkov.not_spark.beans;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Objects;
 
 public class StockInfoDaily {

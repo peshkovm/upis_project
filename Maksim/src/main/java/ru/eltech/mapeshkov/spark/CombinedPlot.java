@@ -1,5 +1,8 @@
 package ru.eltech.mapeshkov.spark;
 
+import java.awt.Dimension;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.jfree.chart.ChartPanel;
@@ -14,10 +17,6 @@ import org.jfree.data.general.AbstractDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-
-import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
 
 public class CombinedPlot extends ApplicationFrame {
   /**

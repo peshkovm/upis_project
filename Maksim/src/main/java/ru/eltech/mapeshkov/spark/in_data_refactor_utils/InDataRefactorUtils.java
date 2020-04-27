@@ -1,24 +1,21 @@
 package ru.eltech.mapeshkov.spark.in_data_refactor_utils;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.*;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import static org.apache.spark.sql.functions.asc;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.apache.spark.sql.functions.asc;
-import static org.apache.spark.sql.functions.desc;
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 
 public class InDataRefactorUtils {
 
@@ -45,9 +42,11 @@ public class InDataRefactorUtils {
   }
 
   public static Dataset<Row> reformatNotLabeledDataToLabeled(
-      final SparkSession spark, final Dataset<Row> datasetNotLabeled) {
+      final SparkSession spark, final Dataset<Row> datasetNotLabeled, boolean addNaNLabel) {
     Dataset<Row> datasetNotLabeledCopy = datasetNotLabeled.toDF();
-    datasetNotLabeledCopy = datasetNotLabeledCopy.withColumn("label", functions.lit(-1.0));
+    datasetNotLabeledCopy =
+        datasetNotLabeledCopy.withColumn("date", new Column("date").cast(DataTypes.StringType));
+    datasetNotLabeledCopy = datasetNotLabeledCopy.withColumn("label", functions.lit(Double.NaN));
     String[] columns = datasetNotLabeledCopy.columns();
     int today_stockIndex = Arrays.asList(columns).indexOf("today_stock");
     int labelIndex = Arrays.asList(columns).indexOf("label");
@@ -74,7 +73,10 @@ public class InDataRefactorUtils {
       rows.set(rowNum - 1, rowTodayLabeled);
     }
 
-    List<Row> rowsLabeled = rows.subList(0, rows.size() - 1);
+    List<Row> rowsLabeled;
+
+    if (addNaNLabel) rowsLabeled = rows.subList(0, rows.size() - 1);
+    else rowsLabeled = rows.subList(0, rows.size());
 
     StructType schemaLabeled =
         new StructType(

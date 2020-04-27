@@ -1,14 +1,17 @@
 package ru.eltech.mapeshkov.spark;
 
-import org.apache.spark.sql.Dataset;
-
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.apache.spark.sql.Dataset;
 
-public class MyFileWriter implements AutoCloseable {
+public class MyFileWriter {
   private PrintWriter writer;
   private static String projectDir = System.getProperty("user.dir");
 
@@ -56,10 +59,5 @@ public class MyFileWriter implements AutoCloseable {
 
   public <T> void show(Dataset<T> data, int numRows, int truncate) {
     println(data.showString(numRows, truncate, true));
-  }
-
-  @Override
-  public void close() throws Exception {
-    writer.close();
   }
 }

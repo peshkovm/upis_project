@@ -2,13 +2,18 @@ package ru.eltech.mapeshkov.not_spark;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ru.eltech.mapeshkov.not_spark.beans.StockInfo;
-
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Random;
+import ru.eltech.mapeshkov.not_spark.beans.StockInfo;
 
 public class Main {
   public static void main(String[] args) {

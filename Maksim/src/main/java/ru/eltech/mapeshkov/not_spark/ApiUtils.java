@@ -2,17 +2,17 @@ package ru.eltech.mapeshkov.not_spark;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ru.eltech.mapeshkov.not_spark.beans.CompanyInfo;
-import ru.eltech.mapeshkov.not_spark.beans.StockInfo;
-import ru.eltech.mapeshkov.not_spark.beans.StockInfoDaily;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import ru.eltech.mapeshkov.not_spark.beans.CompanyInfo;
+import ru.eltech.mapeshkov.not_spark.beans.StockInfo;
+import ru.eltech.mapeshkov.not_spark.beans.StockInfoDaily;
 
 /**
  * This class contains various methods for parsing api from <a
