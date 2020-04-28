@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Parent module</name>
+    <name>upis_project</name>
     <!-- FIXME change it to the project's website -->
     <url>http://www.example.com</url>
 
@@ -24,5 +24,6 @@
         <module>Denis</module>
         <module>Maksim</module>
         <module>Streaming</module>
+        <module>log-viewer</module>
     </modules>
 </project>
