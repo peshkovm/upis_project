@@ -17,8 +17,10 @@ import ru.eltech.mapeshkov.not_spark.beans.StockInfo;
 
 public class Main {
   public static void main(String[] args) {
-    StockInfo stockInfo = ApiUtils.AlphaVantageParser.getLatestStock("apple");
-    System.out.println(stockInfo);
+    for (int i = 0; i < 100; i++) {
+      StockInfo stockInfo = ApiUtils.AlphaVantageParser.getLatestStock("apple");
+      System.out.println(stockInfo);
+    }
   }
 
   static void testApiUtilsOld() {

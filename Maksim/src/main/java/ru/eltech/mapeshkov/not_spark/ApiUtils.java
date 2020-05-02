@@ -20,6 +20,7 @@ import ru.eltech.mapeshkov.not_spark.beans.StockInfoDaily;
  */
 public class ApiUtils {
   private static final ObjectMapper mapper = new ObjectMapper();
+  private static StockInfo latestStockInfo;
 
   // Suppresses default constructor, ensuring non-instantiability.
   private ApiUtils() {}
@@ -72,6 +73,11 @@ public class ApiUtils {
       StockInfo stockInfo;
 
       CompanyInfo companyInfo = getSymbolFromCompanyName(companyName);
+      if (companyInfo == null) {
+        System.err.println("frequency excess occurred");
+        return latestStockInfo;
+      }
+
       String symbol = companyInfo.getSymbol();
 
       try {
@@ -87,8 +93,14 @@ public class ApiUtils {
                     + "&apikey=TF0UUHCZB8SBMXDP");
 
         JsonNode node = getNodeFromUrl(url);
-        node = node.path("Global Quote");
+
+        if ((node = excessHandler(node, "Global Quote")) == null) {
+          System.err.println("frequency excess occurred");
+          return latestStockInfo;
+        }
+
         stockInfo = getPojoStockData(node, StockInfo.class);
+        latestStockInfo = stockInfo;
 
       } catch (IOException e) {
         stockInfo = null;
@@ -119,7 +131,6 @@ public class ApiUtils {
   private static CompanyInfo getSymbolFromCompanyName(String companyName) {
     final String function = "SYMBOL_SEARCH";
     final String datatype = "json";
-    JsonNode node;
     CompanyInfo companyInfo;
 
     try {
@@ -134,9 +145,12 @@ public class ApiUtils {
                   + datatype
                   + "&apikey=TF0UUHCZB8SBMXDP");
 
-      node = getNodeFromUrl(url);
-      node = node.path("bestMatches");
-      node = node.get(0);
+      JsonNode node = getNodeFromUrl(url);
+
+      if ((node = excessHandler(node, "bestMatches")) == null) return null;
+
+      node = node.path(0);
+
       companyInfo = mapper.treeToValue(node, CompanyInfo.class);
 
     } catch (IOException e) {
@@ -145,6 +159,18 @@ public class ApiUtils {
     }
 
     return companyInfo;
+  }
+
+  private static JsonNode excessHandler(final JsonNode node, final String path) throws IOException {
+    JsonNode pathedNode = node.path(path);
+
+    if (pathedNode.isMissingNode()) {
+      pathedNode = node.path("Note");
+      if (!pathedNode.isMissingNode()) {
+        pathedNode = null;
+      } else throw new IOException("Node doesn't contain StockInfo or Note:frequency excess");
+    }
+    return pathedNode;
   }
 
   /**

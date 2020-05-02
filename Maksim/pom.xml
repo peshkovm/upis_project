@@ -6,7 +6,12 @@
 
     <!--Definition of groupId is redundant, because it's inherited from the parent-->
     <artifactId>Maksim</artifactId>
+    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+
+    <modules>
+        <module>plot</module>
+    </modules>
 
     <name>Maksim</name>
     <!-- FIXME change it to the project's website -->

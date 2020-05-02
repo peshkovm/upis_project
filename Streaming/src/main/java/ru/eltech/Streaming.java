@@ -13,7 +13,7 @@ public class Streaming {
 
   public static void start() {
 
-    System.setProperty("hadoop.home.dir", "..\\winutils");
+    System.setProperty("hadoop.home.dir", "C:\\winutils\\");
     SparkConf conf = new SparkConf().setAppName("Streaming");
     JavaStreamingContext jssc = new JavaStreamingContext(conf, Durations.seconds(1));
 

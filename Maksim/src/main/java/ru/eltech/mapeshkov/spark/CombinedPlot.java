@@ -19,6 +19,10 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 public class CombinedPlot extends ApplicationFrame {
+  private final XYSeries labelSeries = new XYSeries("label");
+  private final XYSeries oldPrediction = new XYSeries("old prediction");
+  private final XYSeries newPrediction = new XYSeries("new prediction");
+
   /**
    * Constructs a new application frame.
    *
@@ -54,10 +58,6 @@ public class CombinedPlot extends ApplicationFrame {
   }
 
   private XYDataset createPlotDataset(Dataset<Row> rowDataset) {
-    final XYSeries labelSeries = new XYSeries("label");
-    final XYSeries errorSeries = new XYSeries("old prediction");
-    final XYSeries predictionSeries = new XYSeries("new prediction");
-
     List<Row> rows = rowDataset.collectAsList();
     final int[] i = {1};
 
@@ -76,14 +76,14 @@ public class CombinedPlot extends ApplicationFrame {
             // double error = Math.abs(predictionDouble - labelDouble);
 
             labelSeries.add(i[0], labelDouble);
-            errorSeries.add(i[0]++, predictionDouble);
-          } else predictionSeries.add(i[0]++, predictionDouble);
+            oldPrediction.add(i[0]++, predictionDouble);
+          } else newPrediction.add(i[0]++, predictionDouble);
         });
 
     final XYSeriesCollection collection = new XYSeriesCollection();
     collection.addSeries(labelSeries);
-    collection.addSeries(errorSeries);
-    collection.addSeries(predictionSeries);
+    collection.addSeries(oldPrediction);
+    collection.addSeries(newPrediction);
 
     return collection;
   }
