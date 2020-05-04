@@ -21,10 +21,11 @@
 
     <modules>
         <module>Batch</module>
-        <module>Denis</module>
-        <module>Maksim</module>
         <module>Streaming</module>
         <module>Plot</module>
+        <module>StockAPI</module>
+        <module>NewsAndSentiment</module>
+        <module>Mlib</module>
         <module>log-viewer</module>
     </modules>
 
