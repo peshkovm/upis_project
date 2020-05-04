@@ -4,18 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!--Definition of groupId is redundant, because it's inherited from the parent-->
-    <artifactId>Streaming</artifactId>
+    <artifactId>Plot</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Streaming</name>
-    <!-- FIXME change it to the project's website -->
-    <url>http://www.example.com</url>
-
     <parent>
-        <groupId>ru.eltech</groupId>
         <artifactId>bachelor-diploma</artifactId>
+        <groupId>ru.eltech</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
@@ -27,24 +22,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>ru.eltech</groupId>
-            <artifactId>Maksim</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>ru.eltech</groupId>
-            <artifactId>Denis</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.11</artifactId>
-            <version>2.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming_2.11</artifactId>
-            <version>2.4.0</version>
+            <groupId>org.jfree</groupId>
+            <artifactId>jfreechart</artifactId>
+            <version>1.5.0</version>
         </dependency>
     </dependencies>
 
@@ -64,7 +44,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>ru.eltech.Streaming</mainClass>
+                                    <mainClass>ru.eltech.mapeshkov.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -73,4 +53,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

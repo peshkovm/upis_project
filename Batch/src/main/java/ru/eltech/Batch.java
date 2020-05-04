@@ -51,14 +51,15 @@ public class Batch {
                 long filesOldCount = countOfFilesMap.get(companyDirPath.getFileName().toString());
                 long filesCount =
                     Files.list(companyDirPath).filter(path -> path.toFile().isFile()).count();
+                final int numOfFilesToUpdate = 50;
 
                 System.out.println(companyDirPath);
 
                 for (;
-                    filesCount - filesOldCount < 50;
+                    filesCount - filesOldCount < numOfFilesToUpdate;
                     filesCount =
                         Files.list(companyDirPath).filter(path -> path.toFile().isFile()).count()) {
-                  TimeUnit.MINUTES.sleep(50 - (filesCount - filesOldCount));
+                  TimeUnit.MINUTES.sleep(numOfFilesToUpdate - (filesCount - filesOldCount));
                 }
                 countOfFilesMap.put(companyDirPath.getFileName().toString(), filesCount);
 
@@ -118,7 +119,7 @@ public class Batch {
     // Model<?> trainedModel = PredictionUtils.trainModel(trainingDatasetNotLabeled, logWriter);
 
     Model<?> trainedModel =
-        PredictionUtils.trainSlidingWindowModel(trainingDatasetWindowed, 5, logWriter);
+        PredictionUtils.trainSlidingWindowWithSentimentModel(trainingDatasetWindowed, 5, logWriter);
 
     /*        if (trainedModel instanceof PipelineModel) {
         ((PipelineModel) trainedModel).write().overwrite().save("C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\" + companyDirPath.getFileName() + "outModel");
@@ -153,5 +154,7 @@ public class Batch {
     PredictionUtils.predict(trainedModel, testingDataWindowed, logWriter);
 
     // PredictionUtils.predict(trainedModel, trainingDatasetWindowed, logWriter);
+
+    logWriter.close();
   }
 }
