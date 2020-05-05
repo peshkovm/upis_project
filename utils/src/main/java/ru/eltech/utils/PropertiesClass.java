@@ -16,7 +16,7 @@ public class PropertiesClass {
           "liveFeedLogDirectory", ".\\main\\src\\main\\resources\\logs\\live_feed\\");
       appProperties.setProperty("amountOfFeedsInMinute", "15");
       appProperties.setProperty("totalAmountOfFeeds", "600");
-      appProperties.setProperty("availableCompanies", "Apple,Google" + ""); // without spaces
+      appProperties.setProperty("availableCompanies", "Google,Facebook"); // without spaces
       appProperties.setProperty(
           "totalAmountOfCompanies", String.valueOf(PropertiesClass.getAvailableCompanies().length));
       appProperties.setProperty("amountOfFeedsToRestartBatchLayer", "15");

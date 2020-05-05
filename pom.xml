@@ -28,6 +28,7 @@
     <module>log-viewer</module>
     <module>main</module>
     <module>utils</module>
+    <module>web-app</module>
   </modules>
 
   <dependencies>
