@@ -2,7 +2,6 @@ import React from 'react';
 import './App.css';
 import {Card, Layout, List, Space, Tabs, Typography} from 'antd';
 import {
-    AmazonSquareFilled,
     CheckCircleTwoTone,
     ClockCircleOutlined,
     CloseSquareTwoTone,
@@ -86,17 +85,12 @@ const News = () => {
 const Chart = () => {
     const chartDataGoogle = useSSE('Google', [], {
         stateReducer(state, action) {
+            console.log([action.data]);
             return [...state, action.data];
         }
     });
 
     const chartDataFacebook = useSSE('Facebook', [], {
-        stateReducer(state, action) {
-            return [...state, action.data];
-        }
-    });
-
-    const chartDataAmazon = useSSE('Amazon', [], {
         stateReducer(state, action) {
             return [...state, action.data];
         }
@@ -109,9 +103,6 @@ const Chart = () => {
             </TabPane>
             <TabPane tab="Facebook" key="2" forceRender={true}>
                 <Line data={chartDataFacebook}/>
-            </TabPane>
-            <TabPane tab="Amazon" key="3" forceRender={true}>
-                <Line data={chartDataAmazon}/>
             </TabPane>
         </Tabs>
     </Card>
@@ -127,9 +118,6 @@ const CompanyIcon = function (company) {
         case "Facebook":
             icon = <FacebookFilled style={{fontSize: "16px"}}/>
             break;
-        case "Amazon":
-            icon = <AmazonSquareFilled style={{fontSize: "16px"}}/>
-            break;
         default:
     }
     return <Space>
@@ -142,6 +130,9 @@ const App = function () {
     return (
         <Layout className="layout">
             <Content style={{margin: '24px 24px'}}>
+                <SSEProvider endpoint="http://localhost:8080/api/chartData">
+                    <Chart/>
+                </SSEProvider>
                 <SSEProvider endpoint="http://localhost:8080/api/news">
                     <News/>
                 </SSEProvider>

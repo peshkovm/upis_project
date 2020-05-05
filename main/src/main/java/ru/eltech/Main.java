@@ -65,8 +65,8 @@ public class Main {
     //        .start();
 
     JavaProcess.exec(StreamingMain.class, null);
-    JavaProcess.exec(BatchMain.class, null);
-    JavaProcess.exec(PlotMain.class, null);
+//    JavaProcess.exec(BatchMain.class, null);
+//    JavaProcess.exec(PlotMain.class, null);
 
     List<Double> realStockPrices =
         Files.list(Paths.get(realStockPricesDirectory))

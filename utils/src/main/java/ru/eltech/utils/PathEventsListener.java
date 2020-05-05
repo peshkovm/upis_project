@@ -126,9 +126,8 @@ public class PathEventsListener {
 
   private static void waitingPathToBeCreated(final Path path) {
     try {
-      int amountOfFeedsInMinute = PropertiesClass.getAmountOfFeedsInMinute();
       while (!path.toFile().exists()) {
-        TimeUnit.NANOSECONDS.sleep((long) (60D / amountOfFeedsInMinute * 1_000_000_000));
+        TimeUnit.MILLISECONDS.sleep(100);
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
