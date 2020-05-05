@@ -13,7 +13,16 @@ const Line = function (props) {
         point: {
             visible: true,
         },
-        seriesField: "type"
+        seriesField: "type",
+        interactions: [
+            {
+                type: 'slider',
+                cfg: {
+                    start: 0,
+                    end: 1,
+                },
+            },
+        ]
     };
 
     return (
