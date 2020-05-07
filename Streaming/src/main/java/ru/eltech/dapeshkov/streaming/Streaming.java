@@ -82,6 +82,7 @@ public class Streaming {
                 new PrintWriter(
                     new FileOutputStream("working_files/prediction/predict.txt", false), true)) {
               printWriter.println(realStock + "," + predictionStock);
+              System.out.println("predict");
             }
             dataFrame.show();
           }

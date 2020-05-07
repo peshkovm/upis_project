@@ -104,42 +104,92 @@ public class StockInfo {
         + '}';
   }
 
+  /**
+   * Returns company's name
+   *
+   * @return
+   */
   public String getCompanyName() {
     return companyName;
   }
 
+  /**
+   * Returns open price of stock
+   *
+   * @return
+   */
   public double getOpen() {
     return open;
   }
 
+  /**
+   * Returns high price of stock
+   *
+   * @return
+   */
   public double getHigh() {
     return high;
   }
 
+  /**
+   * Returns low price of stock
+   *
+   * @return
+   */
   public double getLow() {
     return low;
   }
 
+  /**
+   * Returns price of stock
+   *
+   * @return
+   */
   public double getPrice() {
     return price;
   }
 
+  /**
+   * Returns volume of stock
+   *
+   * @return
+   */
   public int getVolume() {
     return volume;
   }
 
+  /**
+   * Returns latest trading day of stock
+   *
+   * @return
+   */
   public LocalDate getLatestTradingDay() {
     return latestTradingDay;
   }
 
+  /**
+   * Returns previous close price of stock
+   *
+   * @return
+   */
   public double getPreviousClose() {
     return previousClose;
   }
 
+  /**
+   * Returns price change of stock
+   *
+   * @return
+   */
   public double getChange() {
     return change;
   }
 
+  /**
+   * Returns price change in percent of stock
+   *
+   * @return
+   */
   public String getChangePercent() {
     return changePercent;
   }

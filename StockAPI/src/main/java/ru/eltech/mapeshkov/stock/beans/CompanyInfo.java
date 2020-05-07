@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Objects;
 
+/** POJO class for information about company */
 public class CompanyInfo {
   @JsonProperty("1. symbol")
   private String symbol;
@@ -92,38 +93,83 @@ public class CompanyInfo {
         + '}';
   }
 
+  /**
+   * Returns company's symbol
+   *
+   * @return
+   */
   public String getSymbol() {
     return symbol;
   }
 
+  /**
+   * Returns company's name
+   *
+   * @return
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * Returns company's type
+   *
+   * @return
+   */
   public String getType() {
     return type;
   }
 
+  /**
+   * Returns company's region
+   *
+   * @return
+   */
   public String getRegion() {
     return region;
   }
 
+  /**
+   * Returns company's market open
+   *
+   * @return
+   */
   public LocalTime getMarketOpen() {
     return marketOpen;
   }
 
+  /**
+   * Returns company's market close
+   *
+   * @return
+   */
   public LocalTime getMarketClose() {
     return marketClose;
   }
 
+  /**
+   * Returns company's timezone
+   *
+   * @return
+   */
   public ZoneId getTimezone() {
     return timezone;
   }
 
+  /**
+   * Returns company's currency
+   *
+   * @return
+   */
   public String getCurrency() {
     return currency;
   }
 
+  /**
+   * Returns match score between symbol and company's name
+   *
+   * @return
+   */
   public double getMatchScore() {
     return matchScore;
   }

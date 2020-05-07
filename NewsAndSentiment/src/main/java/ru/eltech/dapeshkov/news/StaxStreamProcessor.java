@@ -40,7 +40,7 @@ class StaxStreamProcessor {
             if (lastpubdate == null
                 || lastpubdate.isBefore(
                     pubdate)) { // if it is a new item (the date of the item is after the
-              // lastpubdate)
+                                // lastpubdate)
               if (time == null
                   || pubdate.isAfter(
                       time)) { // time will be the max date of the items in given Connection

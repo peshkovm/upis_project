@@ -56,7 +56,7 @@ public class NewsReader {
   public void start() {
     for (final String a : url) {
       final Connection connection =
-          new Connection("http://192.168.0.111:8080/Test_war_exploded/?tag=" + a);
+          new Connection("https://www.rbc.ru/search/ajax/?limit=5000&tag=" + a);
       ex.scheduleAtFixedRate(
           new Runnable() {
             private LocalDateTime lastpubdate = null;
@@ -65,7 +65,7 @@ public class NewsReader {
             {
               String[] arr = new File(out + a + "/").list();
               if (arr != null) {
-                i = arr.length - 1;
+                i = arr.length;
               }
             }
 
@@ -93,6 +93,7 @@ public class NewsReader {
                           Timestamp.valueOf(LocalDateTime.now()),
                           ApiUtils.AlphaVantageParser.getLatestStock(a).getPrice());
                   write(item.toString(), new FileOutputStream(out + a + "/" + i++ + ".txt"));
+                  System.out.println("no news");
                 }
               } catch (Throwable e) {
                 throw new RuntimeException(e);

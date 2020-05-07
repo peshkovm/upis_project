@@ -6,6 +6,7 @@ import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
+/** Enum that contains schemes used for prediction */
 public enum Schemes {
   SCHEMA_NOT_LABELED(
       new StructField[] {
@@ -24,9 +25,10 @@ public enum Schemes {
         new StructField("label", DataTypes.DoubleType, true, Metadata.empty()),
       }),
   SCHEMA_WINDOWED() {
-    private static final int windowWidth = 5;
+    @Override
+    public void setWindowWidth(int windowWidth) {
+      this.windowWidth = windowWidth;
 
-    {
       //////////// fill schema///////////////////
       ArrayList<StructField> structFieldList = new ArrayList<>();
       StructField[] structFields = new StructField[2 * windowWidth + 1];
@@ -53,12 +55,15 @@ public enum Schemes {
       structType = new StructType(structFields);
     }
 
-    int getWindowWidth() {
-      return windowWidth;
+    @Override
+    public int getWindowWidth() {
+      return this.windowWidth;
     }
   };
 
   protected StructType structType;
+
+  protected int windowWidth = 0;
 
   Schemes() {
     this(null);
@@ -68,7 +73,28 @@ public enum Schemes {
     this.structType = new StructType(structFields);
   }
 
+  /**
+   * Returns scheme's type
+   *
+   * @return
+   */
   public StructType getScheme() {
     return structType;
   }
+
+  /**
+   * Returns width of sliding window
+   *
+   * @return
+   */
+  public int getWindowWidth() {
+    return 0;
+  }
+
+  /**
+   * Sets width of sliding window
+   *
+   * @param windowWidth
+   */
+  public void setWindowWidth(int windowWidth) {}
 }

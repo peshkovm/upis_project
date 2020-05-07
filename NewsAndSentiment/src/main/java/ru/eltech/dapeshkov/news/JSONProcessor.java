@@ -63,7 +63,7 @@ public class JSONProcessor {
       return anons;
     }
 
-    private String authors;
+    private String[] authors;
     private String category;
     private String fronturl;
     private String id;
@@ -101,7 +101,7 @@ public class JSONProcessor {
       this.anons = anons;
     }
 
-    public void setAuthors(final String authors) {
+    public void setAuthors(final String[] authors) {
       this.authors = authors;
     }
 
@@ -133,7 +133,7 @@ public class JSONProcessor {
       return anons;
     }
 
-    public String getAuthors() {
+    public String[] getAuthors() {
       return authors;
     }
 

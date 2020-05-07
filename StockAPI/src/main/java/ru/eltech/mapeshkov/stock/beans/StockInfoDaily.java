@@ -58,22 +58,47 @@ public class StockInfoDaily {
         + '}';
   }
 
+  /**
+   * Returns open price of stock
+   *
+   * @return
+   */
   public double getOpen() {
     return open;
   }
 
+  /**
+   * Returns high price of stock
+   *
+   * @return
+   */
   public double getHigh() {
     return high;
   }
 
+  /**
+   * Returns low price of stock
+   *
+   * @return
+   */
   public double getLow() {
     return low;
   }
 
+  /**
+   * Returns close price of stock
+   *
+   * @return
+   */
   public double getClose() {
     return close;
   }
 
+  /**
+   * Returns volume of stock
+   *
+   * @return
+   */
   public int getVolume() {
     return volume;
   }

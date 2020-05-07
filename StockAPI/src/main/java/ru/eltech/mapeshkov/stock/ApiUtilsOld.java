@@ -3,18 +3,23 @@ package ru.eltech.mapeshkov.stock;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import ru.eltech.mapeshkov.stock.beans.CompanyInfo;
 
 /**
  * This class contains various methods for parsing api from <a
@@ -209,15 +214,47 @@ public class ApiUtilsOld {
       }
     }
 
-    private static void getAllStockData(final URL url) {
+    public static void getAllStockData(final String company) {
       JsonNode node;
 
       try {
+        CompanyInfo companyInfo = ApiUtils.AlphaVantageParser.getSymbolFromCompanyName(company);
+        String symbol = companyInfo.getSymbol();
+        System.out.println("symbol= " + symbol);
+
+        URL url =
+            new URL(
+                "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="
+                    + symbol
+                    + "&outputsize=full&apikey=TF0UUHCZB8SBMXDP");
+
         node = getNodeFromUrl(url);
 
         Iterator<Map.Entry<String, JsonNode>> fields = getFields(node, "Time Series (Daily)");
 
-        while (fields.hasNext()) printField(fields);
+        try (PrintWriter writer =
+            new PrintWriter(
+                new FileWriter(
+                    "C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\testing batch\\allStockData\\allStockData_"
+                        + company
+                        + ".txt"),
+                true)) {
+          List<String> fileContent = new ArrayList<>();
+
+          while (fields.hasNext()) {
+            // printField(fields);
+
+            Map.Entry<String, JsonNode> entry = fields.next();
+            String name = entry.getKey();
+            JsonNode value = entry.getValue();
+            JsonNode openValue = value.get("1. open");
+            fileContent.add(company + "," + name + "," + openValue.toString().replace("\"", ""));
+          }
+
+          for (int line = fileContent.size() - 1; line >= 0; line--) {
+            writer.println(fileContent.get(line));
+          }
+        }
       } catch (IOException e) {
         e.printStackTrace();
       }

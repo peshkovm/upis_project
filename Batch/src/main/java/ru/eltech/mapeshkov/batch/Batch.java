@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.ml.Model;
+import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -17,12 +18,20 @@ import ru.eltech.mapeshkov.mlib.PredictionUtils;
 import ru.eltech.mapeshkov.mlib.Schemes;
 import ru.eltech.mapeshkov.mlib.in_data_refactor_utils.InDataRefactorUtils;
 
+/** Class that represents batch-layer in lambda-architecture */
 public class Batch {
-
   // Suppresses default constructor, ensuring non-instantiability.
   private Batch() {}
 
-  public static void start() throws Exception {
+  /**
+   * Starts batch-layer
+   *
+   * @param companiesDirectoryPath
+   * @param isWithSentiment
+   * @throws Exception
+   */
+  public static void start(final String companiesDirectoryPath, final boolean isWithSentiment)
+      throws Exception {
     System.setProperty("hadoop.home.dir", "C:\\winutils\\");
 
     SparkSession spark =
@@ -37,8 +46,7 @@ public class Batch {
     // Create a Java version of the Spark Context
     JavaSparkContext sc = new JavaSparkContext(conf);
 
-    String companiesDirPath =
-        "C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\in files for prediction";
+    String companiesDirPath = companiesDirectoryPath + "\\testing batch in files for prediction";
 
     HashMap<String, Long> countOfFilesMap = new HashMap<>();
 
@@ -52,7 +60,7 @@ public class Batch {
                 long filesOldCount = countOfFilesMap.get(companyDirPath.getFileName().toString());
                 long filesCount =
                     Files.list(companyDirPath).filter(path -> path.toFile().isFile()).count();
-                final int numOfFilesToUpdate = 50;
+                final int numOfFilesToUpdate = 0;
 
                 System.out.println(companyDirPath);
 
@@ -64,22 +72,26 @@ public class Batch {
                 }
                 countOfFilesMap.put(companyDirPath.getFileName().toString(), filesCount);
 
-                batchCalculate(spark, companyDirPath);
+                batchCalculate(spark, companyDirPath, companiesDirectoryPath, isWithSentiment);
               } catch (Exception e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
               }
             });
     // }
   }
 
-  private static void batchCalculate(SparkSession spark, Path companyDirPath) throws Exception {
+  private static void batchCalculate(
+      SparkSession spark, Path companyDirPath, String companiesDirPath, boolean isWithSentiment)
+      throws Exception {
     StructType schemaNotLabeled = Schemes.SCHEMA_NOT_LABELED.getScheme();
     MyFileWriter logWriter =
         new MyFileWriter(
             Paths.get(
-                "C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\logFiles\\"
+                companiesDirPath
+                    + "\\logFiles\\"
                     + companyDirPath.getFileName()
-                    + "\\mlib Ml out.txt"));
+                    + "\\batchLog.txt"));
+    final int windowWidth = Schemes.SCHEMA_WINDOWED.getWindowWidth();
 
     Dataset<Row> trainingDatasetNotLabeled =
         spark
@@ -92,8 +104,8 @@ public class Batch {
             // .csv("C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\in files for
             // prediction\\" + companyDirPath.getFileName())
             .csv(companyDirPath.toString())
-            .toDF("company", "sentiment", "date", "today_stock")
-            .cache();
+            .toDF("company", "sentiment", "date", "today_stock");
+    // .cache();
 
     logWriter.printSchema(trainingDatasetNotLabeled);
     logWriter.show(trainingDatasetNotLabeled);
@@ -106,53 +118,36 @@ public class Batch {
 
     Dataset<Row> trainingDatasetLabeled =
         InDataRefactorUtils.reformatNotLabeledDataToLabeled(
-            spark, trainingDatasetNotLabeledSorted, true);
+            spark, trainingDatasetNotLabeledSorted, false);
 
     logWriter.printSchema(trainingDatasetLabeled);
     logWriter.show(trainingDatasetLabeled);
 
     Dataset<Row> trainingDatasetWindowed =
-        InDataRefactorUtils.reformatInDataToSlidingWindowLayout(spark, trainingDatasetLabeled, 5);
+        InDataRefactorUtils.reformatInDataToSlidingWindowLayout(
+            spark, trainingDatasetLabeled, windowWidth);
 
     logWriter.printSchema(trainingDatasetWindowed);
     logWriter.show(trainingDatasetWindowed);
 
     // Model<?> trainedModel = PredictionUtils.trainModel(trainingDatasetNotLabeled, logWriter);
 
-    Model<?> trainedModel =
-        PredictionUtils.trainSlidingWindowWithSentimentModel(trainingDatasetWindowed, 5, logWriter);
+    Model<?> trainedModel;
+    if (isWithSentiment)
+      trainedModel =
+          PredictionUtils.trainSlidingWindowWithSentimentModel(
+              trainingDatasetWindowed, windowWidth, logWriter);
+    else
+      trainedModel =
+          PredictionUtils.trainSlidingWindowWithoutSentimentModel(
+              trainingDatasetWindowed, windowWidth, logWriter);
 
-    /*        if (trainedModel instanceof PipelineModel) {
-        ((PipelineModel) trainedModel).write().overwrite().save("C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\" + companyDirPath.getFileName() + "outModel");
-    }*/
-
-    //////////////////////////////////
-    Dataset<Row> testingDatasetNotLabeled =
-        spark
-            .read()
-            .schema(schemaNotLabeled)
-            // .option("inferSchema", true)
-            // .option("header", true)л
-            .option("delimiter", ",")
-            .option("charset", "UTF-8")
-            // .csv("C:\\JavaLessons\\bachelor-diploma\\Batch\\src\\test\\resources\\in files for
-            // prediction\\" + companyDirPath.getFileName())
-            .csv("D:\\testData")
-            .toDF("company", "sentiment", "date", "today_stock")
-            .cache();
-    //////////////////////////////////
-
-    Dataset<Row> testingDataNotLabeledSorted =
-        InDataRefactorUtils.sortByDate(spark, testingDatasetNotLabeled, schemaNotLabeled);
-    Dataset<Row> testingDataLabeled =
-        InDataRefactorUtils.reformatNotLabeledDataToLabeled(
-            spark, testingDataNotLabeledSorted, false);
-    Dataset<Row> testingDataWindowed =
-        InDataRefactorUtils.reformatInDataToSlidingWindowLayout(spark, testingDataLabeled, 5);
-
-    PredictionUtils.predict(trainedModel, testingDataWindowed, logWriter);
-
-    // PredictionUtils.predict(trainedModel, trainingDatasetWindowed, logWriter);
+    if (trainedModel instanceof PipelineModel) {
+      ((PipelineModel) trainedModel)
+          .write()
+          .overwrite()
+          .save(companiesDirPath + "\\models\\" + companyDirPath.getFileName());
+    }
 
     logWriter.close();
   }

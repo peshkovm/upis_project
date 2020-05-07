@@ -6,20 +6,32 @@ import java.io.IOException;
 import org.jfree.data.xy.XYDataItem;
 
 public class PlotHelper {
-  private final CombinedPlot plot;
+  private final CombinedChart chart;
   private final String fileName;
   private long numOfNews = 1;
 
-  private final String[] keys = {"real stock", "prediction stock"};
+  private final Comparable<?>[] keys = {"real stock", "prediction stock"};
 
+  /**
+   * Creates helper for instance of {@link CombinedChart}
+   *
+   * @param fileName
+   * @throws IOException
+   * @throws InterruptedException
+   */
   public PlotHelper(final String fileName) throws IOException, InterruptedException {
     this.fileName = fileName;
 
-    plot = new CombinedPlot("news/stock plot", keys);
+    chart = new CombinedChart("news/stock chart", "label", "date", keys);
 
     refresh();
   }
 
+  /**
+   * Refresh the chart Reread file and add new data to chart if presents
+   *
+   * @throws IOException
+   */
   public void refresh() throws IOException {
     try (BufferedReader reader = new BufferedReader(new FileReader(this.fileName))) {
 
@@ -32,8 +44,8 @@ public class PlotHelper {
           double realStock = Double.parseDouble(split[0]);
           double predictionStock = Double.parseDouble(split[1]);
 
-          plot.addPoint(new XYDataItem(numOfNews, realStock), keys[0]);
-          plot.addPoint(new XYDataItem(++numOfNews, predictionStock), keys[1]);
+          chart.addPoint(new XYDataItem(numOfNews, realStock), keys[0]);
+          chart.addPoint(new XYDataItem(++numOfNews, predictionStock), keys[1]);
 
           System.out.println(realStock + " " + predictionStock);
         }
@@ -41,7 +53,12 @@ public class PlotHelper {
     }
   }
 
+  /**
+   * Sets max count of points in chart
+   *
+   * @param length
+   */
   public void setMaxSeriesLength(int length) {
-    plot.setMaxSeriesLength(length);
+    chart.setMaxSeriesLength(length);
   }
 }
