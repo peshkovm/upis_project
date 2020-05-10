@@ -2,13 +2,15 @@ package ru.eltech.dapeshkov.news;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 
 /**
- * This class represents the connection to Connection. The {@link Connection#close() } should be
- * called after reading all necessary information from Connection to close the connection and {@link
+ * This class represents the connection to URL. The {@link Connection#close() } should be called
+ * after reading all necessary information from Connection to close the connection and {@link
  * InputStream}.
  */
 public class Connection implements AutoCloseable {
@@ -22,11 +24,11 @@ public class Connection implements AutoCloseable {
    *
    * @param url URL of the Connection
    */
-  public Connection(final String url) {
+  public Connection(final String url, final String company) {
     URL url1 = null;
     try {
-      url1 = new URL(url);
-    } catch (MalformedURLException e) {
+      url1 = new URL(url + URLEncoder.encode(company, "UTF-8"));
+    } catch (MalformedURLException | UnsupportedEncodingException e) {
       e.printStackTrace();
     }
     this.url = url1;
@@ -51,13 +53,14 @@ public class Connection implements AutoCloseable {
       if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
         lastModified = connection.getLastModified();
         in = connection.getInputStream();
+        connection.getInputStream();
       }
     } catch (IOException e) {
-      e.printStackTrace();
     }
     return in;
   }
 
+  /** closes connection */
   @Override
   public void close() {
     try {

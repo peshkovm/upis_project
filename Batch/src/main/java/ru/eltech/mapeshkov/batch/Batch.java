@@ -20,18 +20,19 @@ import ru.eltech.mapeshkov.mlib.in_data_refactor_utils.InDataRefactorUtils;
 
 /** Class that represents batch-layer in lambda-architecture */
 public class Batch {
+
+  private static final String mainDirectoryPath =
+      "C:\\JavaLessons\\bachelor-diploma\\Streaming\\src\\test\\resources\\batch_files";
+
   // Suppresses default constructor, ensuring non-instantiability.
   private Batch() {}
 
   /**
    * Starts batch-layer
    *
-   * @param companiesDirectoryPath
-   * @param isWithSentiment
    * @throws Exception
    */
-  public static void start(final String companiesDirectoryPath, final boolean isWithSentiment)
-      throws Exception {
+  public static void start() throws Exception {
     System.setProperty("hadoop.home.dir", "C:\\winutils\\");
 
     SparkSession spark =
@@ -46,7 +47,7 @@ public class Batch {
     // Create a Java version of the Spark Context
     JavaSparkContext sc = new JavaSparkContext(conf);
 
-    String companiesDirPath = companiesDirectoryPath + "\\testing batch in files for prediction";
+    String companiesDirPath = mainDirectoryPath + "\\companies";
 
     HashMap<String, Long> countOfFilesMap = new HashMap<>();
 
@@ -72,7 +73,7 @@ public class Batch {
                 }
                 countOfFilesMap.put(companyDirPath.getFileName().toString(), filesCount);
 
-                batchCalculate(spark, companyDirPath, companiesDirectoryPath, isWithSentiment);
+                batchCalculate(spark, companyDirPath);
               } catch (Exception e) {
                 throw new RuntimeException(e);
               }
@@ -80,17 +81,16 @@ public class Batch {
     // }
   }
 
-  private static void batchCalculate(
-      SparkSession spark, Path companyDirPath, String companiesDirPath, boolean isWithSentiment)
-      throws Exception {
+  private static void batchCalculate(SparkSession spark, Path companyDirPath) throws Exception {
     StructType schemaNotLabeled = Schemes.SCHEMA_NOT_LABELED.getScheme();
     MyFileWriter logWriter =
         new MyFileWriter(
             Paths.get(
-                companiesDirPath
+                mainDirectoryPath
                     + "\\logFiles\\"
                     + companyDirPath.getFileName()
                     + "\\batchLog.txt"));
+    Schemes.SCHEMA_WINDOWED.setWindowWidth(3);
     final int windowWidth = Schemes.SCHEMA_WINDOWED.getWindowWidth();
 
     Dataset<Row> trainingDatasetNotLabeled =
@@ -133,20 +133,15 @@ public class Batch {
     // Model<?> trainedModel = PredictionUtils.trainModel(trainingDatasetNotLabeled, logWriter);
 
     Model<?> trainedModel;
-    if (isWithSentiment)
-      trainedModel =
-          PredictionUtils.trainSlidingWindowWithSentimentModel(
-              trainingDatasetWindowed, windowWidth, logWriter);
-    else
-      trainedModel =
-          PredictionUtils.trainSlidingWindowWithoutSentimentModel(
-              trainingDatasetWindowed, windowWidth, logWriter);
+    trainedModel =
+        PredictionUtils.trainSlidingWindowWithSentimentModel(
+            trainingDatasetWindowed, windowWidth, logWriter);
 
     if (trainedModel instanceof PipelineModel) {
       ((PipelineModel) trainedModel)
           .write()
           .overwrite()
-          .save(companiesDirPath + "\\models\\" + companyDirPath.getFileName());
+          .save(Batch.mainDirectoryPath + "\\models\\" + companyDirPath.getFileName());
     }
 
     logWriter.close();

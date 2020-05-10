@@ -7,6 +7,7 @@ import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.classification.LogisticRegression;
 import org.apache.spark.ml.evaluation.Evaluator;
+import org.apache.spark.ml.evaluation.RegressionEvaluator;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.StringIndexerModel;
 import org.apache.spark.ml.feature.VectorAssembler;
@@ -16,6 +17,7 @@ import org.apache.spark.ml.regression.GBTRegressor;
 import org.apache.spark.ml.regression.GeneralizedLinearRegression;
 import org.apache.spark.ml.regression.IsotonicRegression;
 import org.apache.spark.ml.regression.LinearRegression;
+import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.ml.regression.RandomForestRegressor;
 import org.apache.spark.ml.tuning.CrossValidator;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
@@ -117,8 +119,7 @@ public class PredictionUtils {
         new LinearRegression()
             .setFeaturesCol("features")
             .setLabelCol("label")
-            .setPredictionCol("prediction")
-            .setMaxIter(1000);
+            .setPredictionCol("prediction");
 
     GeneralizedLinearRegression glr =
         new GeneralizedLinearRegression()
@@ -183,26 +184,29 @@ public class PredictionUtils {
     // lr
     ParamMap[] paramGrid =
         new ParamGridBuilder()
-            .addGrid(lr.maxIter(), new int[] {10, 1000})
-            .addGrid(lr.regParam(), new double[] {0, 0.001})
-            .addGrid(lr.elasticNetParam(), new double[] {0, 0.5, 1})
+            .addGrid(lr.maxIter(), new int[] {10, 100, 10_000})
+            .addGrid(lr.elasticNetParam(), new double[] {0, 0.1, 0.5, 0.8, 1})
+            .addGrid(lr.regParam(), new double[] {0, 0.001, 0.5, 1, 10, 50, 100})
             .build();
-
-    // gbt
-    /*        ParamMap[] paramGrid = new ParamGridBuilder()
-    .addGrid(gbt.maxIter(), new int[]{10, 30, 50})
-    .build();*/
 
     CrossValidator crossValidator =
         new CrossValidator()
             .setEstimator(pipeline)
             .setEstimatorParamMaps(paramGrid)
-            .setEvaluator(evaluator)
-            .setNumFolds(2);
+            .setEvaluator(new RegressionEvaluator())
+            .setNumFolds(10);
 
     // PipelineModel pipelineModel = pipeline.fit(trainingDatasetWindowed);
     CrossValidatorModel crossValidatorModel = crossValidator.fit(trainingDatasetWindowed);
     Model<?> bestModel = crossValidatorModel.bestModel();
+
+    LinearRegressionModel lrModelFromBestModel =
+        (LinearRegressionModel) (((PipelineModel) bestModel).stages()[pipelineStages.length - 1]);
+    logWriter.println(
+        "Coefficients: "
+            + lrModelFromBestModel.coefficients()
+            + " Intercept: "
+            + lrModelFromBestModel.intercept());
 
     return bestModel;
   }
@@ -336,26 +340,29 @@ public class PredictionUtils {
     // lr
     ParamMap[] paramGrid =
         new ParamGridBuilder()
-            .addGrid(lr.maxIter(), new int[] {10, 1000})
-            .addGrid(lr.regParam(), new double[] {0, 0.001})
-            .addGrid(lr.elasticNetParam(), new double[] {0, 0.5, 1})
+            .addGrid(lr.maxIter(), new int[] {10, 100, 10_000})
+            .addGrid(lr.elasticNetParam(), new double[] {0, 0.1, 0.5, 0.8, 1})
+            .addGrid(lr.regParam(), new double[] {0, 0.001, 0.5, 1, 10, 50, 100})
             .build();
-
-    // gbt
-    /*        ParamMap[] paramGrid = new ParamGridBuilder()
-    .addGrid(gbt.maxIter(), new int[]{10, 30, 50})
-    .build();*/
 
     CrossValidator crossValidator =
         new CrossValidator()
             .setEstimator(pipeline)
             .setEstimatorParamMaps(paramGrid)
-            .setEvaluator(evaluator)
-            .setNumFolds(2);
+            .setEvaluator(new RegressionEvaluator())
+            .setNumFolds(10);
 
-    PipelineModel bestModel = pipeline.fit(trainingDatasetWindowed);
-    // CrossValidatorModel crossValidatorModel = crossValidator.fit(trainingDatasetWindowed);
-    // Model<?> bestModel = crossValidatorModel.bestModel();
+    // PipelineModel pipelineModel = pipeline.fit(trainingDatasetWindowed);
+    CrossValidatorModel crossValidatorModel = crossValidator.fit(trainingDatasetWindowed);
+    Model<?> bestModel = crossValidatorModel.bestModel();
+
+    LinearRegressionModel lrModelFromBestModel =
+        (LinearRegressionModel) (((PipelineModel) bestModel).stages()[pipelineStages.length - 1]);
+    logWriter.println(
+        "Coefficients: "
+            + lrModelFromBestModel.coefficients()
+            + " Intercept: "
+            + lrModelFromBestModel.intercept());
 
     return bestModel;
   }

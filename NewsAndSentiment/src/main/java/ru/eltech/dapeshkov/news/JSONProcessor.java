@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Objects;
 
+/** class for JSON parsing and writing */
 public class JSONProcessor {
   private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -21,6 +23,13 @@ public class JSONProcessor {
 
   private JSONProcessor() {}
 
+  /**
+   * parses JSON into POJO
+   *
+   * @param str JSON to parse
+   * @param cl POJO class
+   * @return POJO
+   */
   public static <T> T parse(final String str, final Class<T> cl) {
     T json = null;
     if (str != null) {
@@ -33,6 +42,13 @@ public class JSONProcessor {
     return json;
   }
 
+  /**
+   * parses JSON into POJO
+   *
+   * @param in JSON to parse
+   * @param cl POJO class
+   * @return POJO
+   */
   public static <T> T parse(final InputStream in, final Class<T> cl) {
     T json = null;
     if (in != null) {
@@ -45,6 +61,12 @@ public class JSONProcessor {
     return json;
   }
 
+  /**
+   * writes JSON to {@link String}
+   *
+   * @param obj JSON
+   * @return {@link String} representing JSON
+   */
   public static <T> String write(final T obj) {
     String res = null;
     try {
@@ -55,6 +77,8 @@ public class JSONProcessor {
     return res;
   }
 
+  /** POJO represents news article */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Item {
     private String anons;
 
@@ -63,11 +87,9 @@ public class JSONProcessor {
       return anons;
     }
 
-    private String[] authors;
     private String category;
     private String fronturl;
     private String id;
-    private String opinion_authors;
 
     private Photo photo;
 
@@ -101,10 +123,6 @@ public class JSONProcessor {
       this.anons = anons;
     }
 
-    public void setAuthors(final String[] authors) {
-      this.authors = authors;
-    }
-
     public void setCategory(final String category) {
       this.category = category;
     }
@@ -115,10 +133,6 @@ public class JSONProcessor {
 
     public void setId(final String id) {
       this.id = id;
-    }
-
-    public void setOpinion_authors(final String opinion_authors) {
-      this.opinion_authors = opinion_authors;
     }
 
     public void setProject(final String project) {
@@ -133,10 +147,6 @@ public class JSONProcessor {
       return anons;
     }
 
-    public String[] getAuthors() {
-      return authors;
-    }
-
     public String getCategory() {
       return category;
     }
@@ -149,10 +159,6 @@ public class JSONProcessor {
       return id;
     }
 
-    public String getOpinion_authors() {
-      return opinion_authors;
-    }
-
     public String getProject() {
       return project;
     }
@@ -160,8 +166,22 @@ public class JSONProcessor {
     public String getTitle() {
       return title;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Item item = (Item) o;
+      return Objects.equals(title, item.title);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(anons, category, fronturl, id, photo, project, publish_date, title);
+    }
   }
 
+  /** POJO represents photo in news article */
   static class Photo {
     @Override
     public String toString() {
@@ -179,6 +199,7 @@ public class JSONProcessor {
     }
   }
 
+  /** POJO represents news */
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class News {
     private Item[] items;
@@ -197,6 +218,7 @@ public class JSONProcessor {
     }
   }
 
+  /** POJO represents train dataset record */
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Train {
     String text;

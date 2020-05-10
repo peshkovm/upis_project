@@ -2,7 +2,7 @@ package ru.eltech.dapeshkov.news;
 
 import java.io.FileNotFoundException;
 
-/** This is a test class */
+/** This is a.txt test class */
 public class Main {
 
   public static void main(final String[] args) throws FileNotFoundException {

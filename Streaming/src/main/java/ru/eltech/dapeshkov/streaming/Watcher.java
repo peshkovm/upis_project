@@ -12,11 +12,18 @@ import java.nio.file.WatchService;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** Watcher directory for changes */
 public class Watcher {
 
   private final WatchService watchService;
   private Path path;
 
+  /**
+   * creates new {@link Watcher} instance
+   *
+   * @param path path to directory to watch for changes
+   * @throws IOException
+   */
   public Watcher(Path path) throws IOException {
     watchService = FileSystems.getDefault().newWatchService();
     WatchKey key =
@@ -27,6 +34,12 @@ public class Watcher {
     this.path = path;
   }
 
+  /**
+   * gets all changed files in directory
+   *
+   * @param watchEvent what kind of event to watch
+   * @return all changed files
+   */
   public List<Path> getChangedFiles(WatchEvent.Kind<Path> watchEvent) {
     WatchKey wk = null;
     try {
@@ -36,8 +49,13 @@ public class Watcher {
       return null;
     }
 
+    /*        System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    wk.pollEvents().stream().distinct().filter(event -> event.kind() == watchEvent).forEach(s -> System.out.println(s.context()));
+    System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");*/
+
     List<Path> collect =
         wk.pollEvents().stream()
+            .distinct()
             .filter(event -> event.kind() == watchEvent)
             .map(event -> path.resolve((Path) event.context()))
             .collect(Collectors.toList());
@@ -50,6 +68,13 @@ public class Watcher {
     return collect;
   }
 
+  /**
+   * checks if file has changed
+   *
+   * @param watchEvent what kind of event to watch
+   * @param file name of file to watch for changes
+   * @return if file has changed
+   */
   public boolean check(WatchEvent.Kind<Path> watchEvent, String file) {
     final WatchKey wk;
     boolean res = false;

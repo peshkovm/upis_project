@@ -3,6 +3,7 @@ package ru.eltech.mapeshkov.plot;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 import org.jfree.data.xy.XYDataItem;
 
 public class PlotHelper {
@@ -22,7 +23,7 @@ public class PlotHelper {
   public PlotHelper(final String fileName) throws IOException, InterruptedException {
     this.fileName = fileName;
 
-    chart = new CombinedChart("news/stock chart", "label", "date", keys);
+    chart = new CombinedChart("news/stock chart", "time", "label", keys);
 
     refresh();
   }
@@ -41,13 +42,19 @@ public class PlotHelper {
         String[] split = line.split(",");
 
         if (split.length == 2) {
-          double realStock = Double.parseDouble(split[0]);
+          double stockToday = Double.parseDouble(split[0]);
           double predictionStock = Double.parseDouble(split[1]);
 
-          chart.addPoint(new XYDataItem(numOfNews, realStock), keys[0]);
+          chart.addPoint(new XYDataItem(numOfNews, stockToday), keys[0]);
           chart.addPoint(new XYDataItem(++numOfNews, predictionStock), keys[1]);
 
-          System.out.println(realStock + " " + predictionStock);
+          System.out.println(stockToday + " " + predictionStock);
+
+          chart.saveChartAsJPEG(
+              Paths.get(
+                  "C:\\JavaLessons\\bachelor-diploma\\Streaming\\src\\test\\resources\\streaming_files\\charts\\chart.jpg"),
+              1200,
+              400);
         }
       }
     }

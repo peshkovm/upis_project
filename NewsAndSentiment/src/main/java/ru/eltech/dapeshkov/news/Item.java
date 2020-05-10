@@ -3,6 +3,7 @@ package ru.eltech.dapeshkov.news;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
+/** POJO written in file */
 public class Item implements Serializable {
   public static final long serialVersionUID = 0L;
   private String sentiment;

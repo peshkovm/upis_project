@@ -18,7 +18,6 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
 import org.jfree.chart.ui.ApplicationFrame;
-import org.jfree.data.general.AbstractDataset;
 import org.jfree.data.xy.XYDataItem;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -207,6 +206,4 @@ public class CombinedChart extends ApplicationFrame {
       e.printStackTrace();
     }
   }
-
-  private static class LabeledXYDataset extends AbstractDataset {}
 }

@@ -244,13 +244,6 @@ public class ApiUtils {
     }
   }
 
-  private static void printField(final Iterator<Map.Entry<String, JsonNode>> fields) {
-    Map.Entry<String, JsonNode> entry = fields.next();
-    String name = entry.getKey();
-    JsonNode value = entry.getValue();
-    System.out.println(name + ":" + value);
-  }
-
   private static Iterator<Map.Entry<String, JsonNode>> getFields(
       final JsonNode node, final String path) {
     return node.path(path).fields();

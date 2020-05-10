@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -28,6 +29,7 @@ import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import ru.eltech.dapeshkov.news.Item;
 import ru.eltech.mapeshkov.mlib.MyFileWriter;
 import ru.eltech.mapeshkov.mlib.PredictionUtils;
+import ru.eltech.mapeshkov.mlib.Schemes;
 import ru.eltech.mapeshkov.mlib.in_data_refactor_utils.InDataRefactorUtils;
 
 public class Streaming {
@@ -38,53 +40,91 @@ public class Streaming {
 
   public static void startRDD() throws IOException {
 
-    System.setProperty("hadoop.home.dir", System.getProperty("user.dir") + "/" + "winutils");
+    // System.setProperty("hadoop.home.dir", System.getProperty("user.dir") + "/" + "winutils");
+    System.setProperty("hadoop.home.dir", "C:\\winutils\\");
 
     SparkConf conf = new SparkConf().setMaster("local[4]").setAppName("NetworkWordCount");
-    JavaStreamingContext jssc = new JavaStreamingContext(conf, Durations.seconds(1));
+    JavaStreamingContext jssc = new JavaStreamingContext(conf, Durations.milliseconds(100));
     jssc.sparkContext().setLogLevel("ERROR");
     jssc.sparkContext().getConf().set("mlib.sql.shuffle.partitions", "1");
 
-    MyFileWriter writer = new MyFileWriter(Paths.get("working_files/logs/log1.txt")); // close
+    Schemes.SCHEMA_WINDOWED.setWindowWidth(3);
 
-    Model model = new Model("working_files/model/model");
+    // logs
+    MyFileWriter writer =
+        new MyFileWriter(
+            Paths.get(
+                "C:\\JavaLessons\\bachelor-diploma\\Streaming\\src\\test\\resources\\streaming_files\\logs\\log.txt")); // close
 
+    // mlib model
+    Model model =
+        new Model(
+            "C:\\JavaLessons\\bachelor-diploma\\Streaming\\src\\test\\resources\\batch_files\\models\\apple");
+
+    // reading data news
     JavaDStream<String> stringJavaDStream =
-        jssc.receiverStream(new Receiver("working_files/files/Google/", 5));
+        jssc.receiverStream(
+            new Receiver(
+                "C:\\JavaLessons\\bachelor-diploma\\Streaming\\src\\test\\resources\\streaming_files\\in_files\\apple",
+                3));
     JavaDStream<Item> schemaJavaDStream =
         stringJavaDStream.map(
             str -> {
               String[] split = str.split(",");
+              // POJO
               return new Item(
                   split[0], split[1], Timestamp.valueOf(split[2]), Double.valueOf(split[3]));
             });
 
     schemaJavaDStream.foreachRDD(
         rdd -> { // driver
-          if (rdd.count() == 5) {
+          if (rdd.count() == 3) {
             SparkSession spark =
                 SparkSession.builder().config(rdd.context().getConf()).getOrCreate();
             JavaRDD<Item> sortedRDD = rdd.sortBy(Item::getDate, true, 1);
             Dataset<Row> dataFrame = spark.createDataFrame(sortedRDD, Item.class);
+            writer.println("dataFrame:");
+            writer.show(dataFrame);
+            // get mlib model
             PipelineModel pipelineModel = model.getModel();
+            // some data refactoring
             Dataset<Row> labeledDataFrame =
-                InDataRefactorUtils.reformatNotLabeledDataToLabeled(spark, dataFrame, false);
+                InDataRefactorUtils.reformatNotLabeledDataToLabeled(spark, dataFrame, true);
+            writer.println("labeledDataFrame");
+            writer.show(labeledDataFrame);
             Dataset<Row> windowedDataFrame =
-                InDataRefactorUtils.reformatInDataToSlidingWindowLayout(spark, labeledDataFrame, 5);
+                InDataRefactorUtils.reformatInDataToSlidingWindowLayout(spark, labeledDataFrame, 3);
+            writer.println("windowedDataFrame");
+            writer.show(windowedDataFrame);
+            // prediction
             Dataset<Row> predict =
                 PredictionUtils.predict(pipelineModel, windowedDataFrame, writer);
+            String[] columns = predict.columns();
+            int labelIndex = Arrays.asList(columns).indexOf("stock_today");
+            int predictionIndex = Arrays.asList(columns).indexOf("prediction");
 
             List<Row> rows = predict.collectAsList();
-            double realStock = Double.parseDouble(rows.get(0).mkString(";").split(";")[9]);
-            double predictionStock = Double.parseDouble(rows.get(0).mkString(";").split(";")[17]);
 
+            for (Row row : rows) writer.println(row.mkString(";"));
+
+            // real stock on today
+            double realStock = Double.parseDouble(rows.get(0).mkString(";").split(";")[labelIndex]);
+            // prediciton stock
+            double predictionStock =
+                Double.parseDouble(rows.get(0).mkString(";").split(";")[predictionIndex]);
+
+            // writes real stock and prediciton to file
             try (PrintWriter printWriter =
                 new PrintWriter(
-                    new FileOutputStream("working_files/prediction/predict.txt", false), true)) {
+                    new FileOutputStream(
+                        "C:\\JavaLessons\\bachelor-diploma\\Streaming\\src\\test\\resources\\streaming_files\\prediction\\predict.txt",
+                        false),
+                    true)) {
               printWriter.println(realStock + "," + predictionStock);
               System.out.println("predict");
             }
-            dataFrame.show();
+            // debugging
+            predict.show();
           }
         });
 
