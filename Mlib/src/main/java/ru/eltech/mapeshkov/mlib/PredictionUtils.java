@@ -24,6 +24,7 @@ import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import ru.eltech.utils.MyFileWriter;
 
 /** Class that contains util methods for prediction */
 public class PredictionUtils {
@@ -184,9 +185,9 @@ public class PredictionUtils {
     // lr
     ParamMap[] paramGrid =
         new ParamGridBuilder()
-            .addGrid(lr.maxIter(), new int[] {10, 100, 10_000})
-            .addGrid(lr.elasticNetParam(), new double[] {0, 0.1, 0.5, 0.8, 1})
-            .addGrid(lr.regParam(), new double[] {0, 0.001, 0.5, 1, 10, 50, 100})
+            .addGrid(lr.maxIter(), new int[] {1})
+            .addGrid(lr.elasticNetParam(), new double[] {0})
+            .addGrid(lr.regParam(), new double[] {0})
             .build();
 
     CrossValidator crossValidator =
@@ -194,7 +195,7 @@ public class PredictionUtils {
             .setEstimator(pipeline)
             .setEstimatorParamMaps(paramGrid)
             .setEvaluator(new RegressionEvaluator())
-            .setNumFolds(10);
+            .setNumFolds(2);
 
     // PipelineModel pipelineModel = pipeline.fit(trainingDatasetWindowed);
     CrossValidatorModel crossValidatorModel = crossValidator.fit(trainingDatasetWindowed);

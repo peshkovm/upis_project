@@ -1,16 +1,14 @@
-package ru.eltech.mapeshkov.mlib;
+package ru.eltech.utils;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import org.apache.spark.sql.Dataset;
 
-/** Class that writes data to file and writes some useful information about dataset in console */
+/** Class that writes data to FEEDS and writes some useful information about dataset in console */
 public class MyFileWriter implements AutoCloseable {
   private PrintWriter writer;
   private static String projectDir = System.getProperty("user.dir");
@@ -23,14 +21,10 @@ public class MyFileWriter implements AutoCloseable {
    */
   public MyFileWriter(Path path) throws IOException {
     File parentFile = path.toFile().getParentFile();
-    if (!parentFile.exists() && !parentFile.mkdirs())
+    if (!parentFile.exists() && !parentFile.mkdirs()) {
       throw new IllegalStateException("Couldn't create dir: " + parentFile);
-    writer =
-        new PrintWriter(
-            new BufferedWriter(
-                new OutputStreamWriter(
-                    new FileOutputStream(path.toFile()), StandardCharsets.UTF_8)),
-            true);
+    }
+    writer = new PrintWriter(new BufferedWriter(new FileWriter(path.toFile(), true)), true);
     writer.print("");
     writer.flush();
   }
@@ -76,7 +70,7 @@ public class MyFileWriter implements AutoCloseable {
    * @param <T>
    */
   public <T> void show(Dataset<T> data) {
-    show(data, 5);
+    show(data, 1000);
   }
 
   /**

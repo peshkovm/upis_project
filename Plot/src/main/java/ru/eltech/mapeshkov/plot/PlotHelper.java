@@ -1,71 +1,91 @@
 package ru.eltech.mapeshkov.plot;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardWatchEventKinds;
+import java.util.concurrent.TimeUnit;
 import org.jfree.data.xy.XYDataItem;
+import ru.eltech.utils.PathEventsListener;
+import ru.eltech.utils.PathEventsListener.DoJobUntilStrategies;
+import ru.eltech.utils.PropertiesClass;
 
 public class PlotHelper {
-  private final CombinedChart chart;
-  private final String fileName;
-  private long numOfNews = 1;
+  private static final Comparable<?>[] KEYS = {"real stock", "prediction stock"};
+  private static final String STREAMING_VIEW_DIRECTORY =
+      PropertiesClass.getStreamingViewDirectory();
 
-  private final Comparable<?>[] keys = {"real stock", "prediction stock"};
-
-  /**
-   * Creates helper for instance of {@link CombinedChart}
-   *
-   * @param fileName
-   * @throws IOException
-   * @throws InterruptedException
-   */
-  public PlotHelper(final String fileName) throws IOException, InterruptedException {
-    this.fileName = fileName;
-
-    chart = new CombinedChart("news/stock chart", "time", "label", keys);
-
-    refresh();
+  public static void start() {
+    PathEventsListener.doJobOnEvent(
+        Paths.get(STREAMING_VIEW_DIRECTORY),
+        StandardWatchEventKinds.ENTRY_CREATE,
+        (contextPath) -> new Thread(() -> threadJobForEachCompany(contextPath)).start(),
+        DoJobUntilStrategies.COMPANIES,
+        true);
   }
 
-  /**
-   * Refresh the chart Reread file and add new data to chart if presents
-   *
-   * @throws IOException
-   */
-  public void refresh() throws IOException {
-    try (BufferedReader reader = new BufferedReader(new FileReader(this.fileName))) {
+  private static void threadJobForEachCompany(Path companyDirPath) {
+    final CombinedChart chart =
+        new CombinedChart(
+            companyDirPath.getFileName().toString(), "streaming view number", "price", KEYS);
 
-      String line;
+    System.out.println("Plot for " + companyDirPath.toString());
 
-      while ((line = reader.readLine()) != null) {
-        String[] split = line.split(",");
+    PathEventsListener.doJobOnEvent(
+        companyDirPath,
+        StandardWatchEventKinds.ENTRY_CREATE,
+        (streamingViewPath) -> {
+          try {
 
-        if (split.length == 2) {
-          double stockToday = Double.parseDouble(split[0]);
-          double predictionStock = Double.parseDouble(split[1]);
+            System.out.println("Plot received " + streamingViewPath.toString());
 
-          chart.addPoint(new XYDataItem(numOfNews, stockToday), keys[0]);
-          chart.addPoint(new XYDataItem(++numOfNews, predictionStock), keys[1]);
+            waitingFileToBeFilled(companyDirPath);
 
-          System.out.println(stockToday + " " + predictionStock);
+            Files.readAllLines(streamingViewPath)
+                .forEach(
+                    line -> {
+                      String[] split = line.split(",");
+                      double stockToday = Double.parseDouble(split[0]);
 
-          chart.saveChartAsJPEG(
-              Paths.get(
-                  "C:\\JavaLessons\\bachelor-diploma\\Streaming\\src\\test\\resources\\streaming_files\\charts\\chart.jpg"),
-              1200,
-              400);
-        }
-      }
+                      int streamingViewNumber =
+                          Integer.parseInt(
+                              streamingViewPath
+                                  .getFileName()
+                                  .toString()
+                                  .split("\\.")[0]
+                                  .split("w")[1]);
+
+                      waitingFileToBeFilled(streamingViewPath);
+
+                      chart.addPoint(new XYDataItem(streamingViewNumber, stockToday), KEYS[0]);
+
+                      if (!split[1].equals("null")) {
+                        double predictionStock = Double.parseDouble(split[1]);
+
+                        chart.addPoint(
+                            new XYDataItem(streamingViewNumber, predictionStock), KEYS[1]);
+                      }
+                    });
+
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        },
+        DoJobUntilStrategies.FEEDS,
+        true);
+
+    chart.saveChartAsJPEG(
+        Paths.get(
+            PropertiesClass.getPlotDirectory() + companyDirPath.getFileName() + "//" + "chart.jpg"),
+        1200,
+        400);
+  }
+
+  private static void waitingFileToBeFilled(final Path watchable) {
+    try {
+      TimeUnit.MILLISECONDS.sleep(100);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
-  }
-
-  /**
-   * Sets max count of points in chart
-   *
-   * @param length
-   */
-  public void setMaxSeriesLength(int length) {
-    chart.setMaxSeriesLength(length);
   }
 }

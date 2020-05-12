@@ -1,4 +1,4 @@
-package ru.eltech.mapeshkov.mlib;
+package ru.eltech.utils;
 
 import java.util.ArrayList;
 import org.apache.spark.sql.types.DataTypes;
@@ -25,15 +25,13 @@ public enum Schemes {
         new StructField("label", DataTypes.DoubleType, true, Metadata.empty()),
       }),
   SCHEMA_WINDOWED() {
-    @Override
-    public void setWindowWidth(int windowWidth) {
-      this.windowWidth = windowWidth;
-
+    {
       //////////// fill schema///////////////////
+      int slidingWindowWidth = PropertiesClass.getSlidingWindowWidth();
       ArrayList<StructField> structFieldList = new ArrayList<>();
-      StructField[] structFields = new StructField[2 * windowWidth + 1];
+      StructField[] structFields = new StructField[2 * slidingWindowWidth + 1];
 
-      for (int i = windowWidth - 1; i >= 0; i--) {
+      for (int i = slidingWindowWidth - 1; i >= 0; i--) {
         if (i != 0) {
           structFieldList.add(
               new StructField("sentiment_" + i, DataTypes.StringType, false, Metadata.empty()));
@@ -54,16 +52,9 @@ public enum Schemes {
 
       structType = new StructType(structFields);
     }
-
-    @Override
-    public int getWindowWidth() {
-      return this.windowWidth;
-    }
   };
 
   protected StructType structType;
-
-  protected int windowWidth = 0;
 
   Schemes() {
     this(null);
@@ -81,20 +72,4 @@ public enum Schemes {
   public StructType getScheme() {
     return structType;
   }
-
-  /**
-   * Returns width of sliding window
-   *
-   * @return
-   */
-  public int getWindowWidth() {
-    return 0;
-  }
-
-  /**
-   * Sets width of sliding window
-   *
-   * @param windowWidth
-   */
-  public void setWindowWidth(int windowWidth) {}
 }

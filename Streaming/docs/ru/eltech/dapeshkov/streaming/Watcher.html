@@ -99,7 +99,7 @@ var activeTableTab = "activeTableTab";
 <li>java.lang.Object</li>
 <li>
 <ul class="inheritance">
-<li>ru.eltech.dapeshkov.streaming.Watcher</li>
+<li>ru.eltech.utils.PathEventsListener</li>
 </ul>
 </li>
 </ul>
@@ -110,7 +110,7 @@ var activeTableTab = "activeTableTab";
 <br>
 <pre>public class <span class="typeNameLabel">Watcher</span>
 extends java.lang.Object</pre>
-<div class="block">Watcher directory for changes</div>
+<div class="block">Watcher companyDirPath for changes</div>
 </li>
 </ul>
 </div>
@@ -158,7 +158,7 @@ extends java.lang.Object</pre>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;java.nio.file.Path&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../ru/eltech/dapeshkov/streaming/Watcher.html#getChangedFiles-java.nio.file.WatchEvent.Kind-">getChangedFiles</a></span>(java.nio.file.WatchEvent.Kind&lt;java.nio.file.Path&gt;&nbsp;watchEvent)</code>
-<div class="block">gets all changed files in directory</div>
+<div class="block">gets all changed files in companyDirPath</div>
 </td>
 </tr>
 </table>
@@ -194,7 +194,7 @@ extends java.lang.Object</pre>
 <div class="block">creates new <a href="../../../../ru/eltech/dapeshkov/streaming/Watcher.html" title="class in ru.eltech.dapeshkov.streaming"><code>Watcher</code></a> instance</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>path</code> - path to directory to watch for changes</dd>
+<dd><code>path</code> - path to companyDirPath to watch for changes</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code>java.io.IOException</code></dd>
 </dl>
@@ -215,7 +215,7 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getChangedFiles</h4>
 <pre>public&nbsp;java.util.List&lt;java.nio.file.Path&gt;&nbsp;getChangedFiles(java.nio.file.WatchEvent.Kind&lt;java.nio.file.Path&gt;&nbsp;watchEvent)</pre>
-<div class="block">gets all changed files in directory</div>
+<div class="block">gets all changed files in companyDirPath</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>watchEvent</code> - what kind of event to watch</dd>

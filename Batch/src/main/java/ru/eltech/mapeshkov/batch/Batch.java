@@ -3,37 +3,36 @@ package ru.eltech.mapeshkov.batch;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
+import java.nio.file.StandardWatchEventKinds;
 import java.util.concurrent.TimeUnit;
-import org.apache.spark.SparkContext;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.ml.Model;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructType;
-import ru.eltech.mapeshkov.mlib.MyFileWriter;
 import ru.eltech.mapeshkov.mlib.PredictionUtils;
-import ru.eltech.mapeshkov.mlib.Schemes;
 import ru.eltech.mapeshkov.mlib.in_data_refactor_utils.InDataRefactorUtils;
+import ru.eltech.utils.MyFileWriter;
+import ru.eltech.utils.PathEventsListener;
+import ru.eltech.utils.PathEventsListener.DoJobUntilStrategies;
+import ru.eltech.utils.PropertiesClass;
+import ru.eltech.utils.Schemes;
 
 /** Class that represents batch-layer in lambda-architecture */
 public class Batch {
-
-  private static final String mainDirectoryPath =
-      "C:\\JavaLessons\\bachelor-diploma\\Streaming\\src\\test\\resources\\batch_files";
+  private static final String LIVE_FEED_DIRECTORY = PropertiesClass.getLiveFeedDirectory();
+  private static final String BATCH_LOG_DIRECTORY = PropertiesClass.getBatchLogDirectory();
+  private static final String BATCH_ML_MODEL_DIRECTORY = PropertiesClass.getbatchMlModelDirectory();
+  private static final int AMOUNT_OF_FEEDS_IN_MINUTE = PropertiesClass.getAmountOfFeedsInMinute();
+  private static final int TOTAL_AMOUNT_OF_FEEDS = PropertiesClass.getTotalAmountOfFeeds();
 
   // Suppresses default constructor, ensuring non-instantiability.
   private Batch() {}
 
-  /**
-   * Starts batch-layer
-   *
-   * @throws Exception
-   */
-  public static void start() throws Exception {
-    System.setProperty("hadoop.home.dir", "C:\\winutils\\");
+  /** Starts batch-layer */
+  public static void start() {
+    System.setProperty("hadoop.home.dir", System.getProperty("user.dir") + "\\winutils");
 
     SparkSession spark =
         SparkSession.builder()
@@ -42,56 +41,63 @@ public class Batch {
             .master("local[*]")
             .getOrCreate();
 
-    SparkContext conf = spark.sparkContext();
-
-    // Create a Java version of the Spark Context
-    JavaSparkContext sc = new JavaSparkContext(conf);
-
-    String companiesDirPath = mainDirectoryPath + "\\companies";
-
-    HashMap<String, Long> countOfFilesMap = new HashMap<>();
-
-    // for (; ; ) {
-    Files.list(Paths.get(companiesDirPath))
-        .filter(path -> path.toFile().isDirectory())
-        .forEach(
-            companyDirPath -> {
-              try {
-                countOfFilesMap.putIfAbsent(companyDirPath.getFileName().toString(), 0L);
-                long filesOldCount = countOfFilesMap.get(companyDirPath.getFileName().toString());
-                long filesCount =
-                    Files.list(companyDirPath).filter(path -> path.toFile().isFile()).count();
-                final int numOfFilesToUpdate = 0;
-
-                System.out.println(companyDirPath);
-
-                for (;
-                    filesCount - filesOldCount < numOfFilesToUpdate;
-                    filesCount =
-                        Files.list(companyDirPath).filter(path -> path.toFile().isFile()).count()) {
-                  TimeUnit.MINUTES.sleep(numOfFilesToUpdate - (filesCount - filesOldCount));
-                }
-                countOfFilesMap.put(companyDirPath.getFileName().toString(), filesCount);
-
-                batchCalculate(spark, companyDirPath);
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            });
-    // }
+    PathEventsListener.doJobOnEvent(
+        Paths.get(LIVE_FEED_DIRECTORY),
+        StandardWatchEventKinds.ENTRY_CREATE,
+        (contextPath) -> new Thread(() -> threadJobForEachCompany(contextPath, spark)).start(),
+        DoJobUntilStrategies.COMPANIES,
+        true);
   }
 
-  private static void batchCalculate(SparkSession spark, Path companyDirPath) throws Exception {
+  private static void threadJobForEachCompany(final Path companyDirPath, SparkSession spark) {
+    final int amountOfFeedsToRestartBatchLayer =
+        PropertiesClass.getAmountOfFeedsToRestartBatchLayer();
+    long oldAmountOfFiles = 0;
+    int batchLayerRestartNumber = 0;
+
+    try {
+      long currentAmountOfFiles =
+          Files.list(companyDirPath).filter(path -> path.toFile().isFile()).count();
+
+      // System.out.println(companyDirPath);
+
+      for (;
+          currentAmountOfFiles - oldAmountOfFiles < amountOfFeedsToRestartBatchLayer;
+          currentAmountOfFiles =
+              Files.list(companyDirPath).filter(path -> path.toFile().isFile()).count()) {
+        TimeUnit.NANOSECONDS.sleep((long) (60D / AMOUNT_OF_FEEDS_IN_MINUTE * 1_000_000_000));
+      }
+
+      oldAmountOfFiles = currentAmountOfFiles;
+
+      batchCalculate(spark, companyDirPath, batchLayerRestartNumber);
+
+      batchLayerRestartNumber++;
+
+      long currentAmountOfFeedFiles =
+          Files.list(companyDirPath).filter(path -> path.toFile().isFile()).count();
+      if (currentAmountOfFeedFiles == TOTAL_AMOUNT_OF_FEEDS) {
+        return;
+      }
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void batchCalculate(
+      SparkSession spark, Path companyDirPath, int batchLayerRestartNumber) throws Exception {
     StructType schemaNotLabeled = Schemes.SCHEMA_NOT_LABELED.getScheme();
     MyFileWriter logWriter =
         new MyFileWriter(
             Paths.get(
-                mainDirectoryPath
-                    + "\\logFiles\\"
+                BATCH_LOG_DIRECTORY
                     + companyDirPath.getFileName()
-                    + "\\batchLog.txt"));
-    Schemes.SCHEMA_WINDOWED.setWindowWidth(3);
-    final int windowWidth = Schemes.SCHEMA_WINDOWED.getWindowWidth();
+                    + "\\"
+                    + "batch "
+                    + batchLayerRestartNumber
+                    + ".log"));
+    int slidingWindowWidth = PropertiesClass.getSlidingWindowWidth();
 
     Dataset<Row> trainingDatasetNotLabeled =
         spark
@@ -125,7 +131,7 @@ public class Batch {
 
     Dataset<Row> trainingDatasetWindowed =
         InDataRefactorUtils.reformatInDataToSlidingWindowLayout(
-            spark, trainingDatasetLabeled, windowWidth);
+            spark, trainingDatasetLabeled, slidingWindowWidth);
 
     logWriter.printSchema(trainingDatasetWindowed);
     logWriter.show(trainingDatasetWindowed);
@@ -135,13 +141,13 @@ public class Batch {
     Model<?> trainedModel;
     trainedModel =
         PredictionUtils.trainSlidingWindowWithSentimentModel(
-            trainingDatasetWindowed, windowWidth, logWriter);
+            trainingDatasetWindowed, slidingWindowWidth, logWriter);
 
     if (trainedModel instanceof PipelineModel) {
       ((PipelineModel) trainedModel)
           .write()
           .overwrite()
-          .save(Batch.mainDirectoryPath + "\\models\\" + companyDirPath.getFileName());
+          .save(BATCH_ML_MODEL_DIRECTORY + companyDirPath.getFileName());
     }
 
     logWriter.close();

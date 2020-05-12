@@ -96,7 +96,7 @@ class MainMenu {
 
     SwingUtilities.invokeLater(
         () -> {
-          frame = new JFrame("iFuture task 1");
+          frame = new JFrame("log viewer");
           frame.setContentPane(new MainMenu().formPanel);
         });
   }
@@ -155,13 +155,14 @@ class MainMenu {
           if (folderLocationTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(frame, "File location must not be empty");
             return;
-          } else if (findingTextTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(frame, "Text to find must not be empty");
-            return;
-          } /* else if (fileExtensionTextField.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "File extension must not be empty");
-                return;
+          } /*else if (findingTextTextField.getText().isEmpty()) {
+              JOptionPane.showMessageDialog(frame, "Text to find must not be empty");
+              return;
             }*/
+          /* else if (fileExtensionTextField.getText().isEmpty()) {
+              JOptionPane.showMessageDialog(frame, "File extension must not be empty");
+              return;
+          }*/
           /* else if (!fileExtensionTextField.getText().startsWith(".")) {
               JOptionPane.showMessageDialog(frame, "File extension must start with .");
               return;
@@ -592,7 +593,7 @@ class MainMenu {
         int width = c.getPreferredSize().width + getIntercellSpacing().width;
         preferredWidth = Math.max(preferredWidth, width);
 
-        tableColumn.setPreferredWidth(preferredWidth);
+        tableColumn.setPreferredWidth(2 * preferredWidth);
       }
     }
 

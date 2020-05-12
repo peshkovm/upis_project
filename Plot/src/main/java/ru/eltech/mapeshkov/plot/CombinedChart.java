@@ -181,18 +181,18 @@ public class CombinedChart extends ApplicationFrame {
   }
 
   /**
-   * Save chart as .jpg to file
+   * Save chart as .jpg to FEEDS
    *
-   * @param file the file
+   * @param file the FEEDS
    */
   public void saveChartAsJPEG(Path file) {
     saveChartAsJPEG(file, this.width, this.height);
   }
 
   /**
-   * Save chart as .jpg to file
+   * Save chart as .jpg to FEEDS
    *
-   * @param file the file
+   * @param file the FEEDS
    * @param width the image width
    * @param height the image height
    */

@@ -88,7 +88,7 @@
             </constraints>
             <properties>
               <horizontalAlignment value="2"/>
-              <text value="txt"/>
+              <text value="log"/>
             </properties>
           </component>
           <grid id="a5cbe" binding="searchAndCancelButtonsPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

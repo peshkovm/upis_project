@@ -12,7 +12,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
-import ru.eltech.mapeshkov.mlib.Schemes;
+import ru.eltech.utils.Schemes;
 
 /** Class that contains util methods for data used in prediction refactoring */
 public class InDataRefactorUtils {

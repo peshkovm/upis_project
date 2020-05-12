@@ -143,7 +143,7 @@ extends org.apache.spark.streaming.receiver.Receiver&lt;java.lang.String&gt;</pr
 <th class="colOne" scope="col">Constructor and Description</th>
 </tr>
 <tr class="altColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../../ru/eltech/dapeshkov/streaming/Receiver.html#Receiver-java.lang.String-int-">Receiver</a></span>(java.lang.String&nbsp;directory,
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../ru/eltech/dapeshkov/streaming/Receiver.html#Receiver-java.lang.String-int-">Receiver</a></span>(java.lang.String&nbsp;companyDirPath,
         int&nbsp;window)</code>&nbsp;</td>
 </tr>
 </table>
@@ -204,11 +204,11 @@ extends org.apache.spark.streaming.receiver.Receiver&lt;java.lang.String&gt;</pr
 <ul class="blockListLast">
 <li class="blockList">
 <h4>Receiver</h4>
-<pre>public&nbsp;Receiver(java.lang.String&nbsp;directory,
+<pre>public&nbsp;Receiver(java.lang.String&nbsp;companyDirPath,
                 int&nbsp;window)</pre>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>directory</code> - the path to directory to read files from</dd>
+<dd><code>companyDirPath</code> - the path to companyDirPath to read files from</dd>
 <dd><code>window</code> - size of window (how many messages should be accumulated before pushing to Apache Spark)</dd>
 </dl>
 </li>

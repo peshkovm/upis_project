@@ -1,0 +1,40 @@
+package ru.eltech.utils;
+
+import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
+
+public final class JavaProcess {
+
+  private JavaProcess() {}
+
+  public static int exec(Class klass, List<String> args) throws RuntimeException {
+    try {
+
+      String javaHome = System.getProperty("java.home");
+      String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
+      String classpath = System.getProperty("java.class.path");
+      String className = klass.getName();
+
+      List<String> command = new LinkedList<String>();
+      command.add(javaBin);
+      command.add("-cp");
+      command.add(classpath);
+      command.add(className);
+      if (args != null) {
+        command.addAll(args);
+      }
+
+      ProcessBuilder builder = new ProcessBuilder(command);
+
+      System.out.println(klass.getSimpleName() + " is started");
+
+      Process process = builder.inheritIO().start();
+      // process.waitFor();
+      // return process.exitValue();
+      return 0;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+}
