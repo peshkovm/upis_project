@@ -68,11 +68,7 @@ public class PathEventsListener {
       waitingPathToBeCreated(watchable);
 
       WatchService watchService = FileSystems.getDefault().newWatchService();
-      watchable.register(
-          watchService,
-          StandardWatchEventKinds.ENTRY_CREATE,
-          StandardWatchEventKinds.ENTRY_MODIFY,
-          StandardWatchEventKinds.ENTRY_DELETE);
+      watchable.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
 
       Observable<Path> source =
           Observable.create(

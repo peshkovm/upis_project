@@ -85,7 +85,7 @@ public class Main {
                 })
             .collect(Collectors.toList());
 
-    TimeUnit.SECONDS.sleep(15);
+    TimeUnit.SECONDS.sleep(5);
 
     for (int feedNumber = 0;
         feedNumber < realStockPrices.size() && feedNumber < totalAmountOfFeeds;
@@ -105,7 +105,7 @@ public class Main {
 
         feedWriter.println(companyName + "," + sentiment + "," + timestamp + "," + realStockPrice);
         logWriter.println("feed " + feedNumber + " at time : " + timestamp);
-        System.out.println("feed " + feedNumber + " at time : " + timestamp);
+        System.out.println(companyName + "\\" + "feed " + feedNumber + " at time : " + timestamp);
 
         date = date.plusNanos((long) (60D / amountOfFeedsInMinute * 1_000_000_000));
         TimeUnit.NANOSECONDS.sleep((long) (60D / amountOfFeedsInMinute * 1_000_000_000));

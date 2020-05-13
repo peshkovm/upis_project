@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,6 +32,7 @@ import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import ru.eltech.dapeshkov.news.Item;
 import ru.eltech.mapeshkov.mlib.PredictionUtils;
 import ru.eltech.mapeshkov.mlib.in_data_refactor_utils.InDataRefactorUtils;
+import ru.eltech.utils.JavaProcess;
 import ru.eltech.utils.MyFileWriter;
 import ru.eltech.utils.PathEventsListener;
 import ru.eltech.utils.PathEventsListener.DoJobUntilStrategies;
@@ -42,141 +44,151 @@ public class Streaming {
   private Streaming() {}
 
   public static void start() {
-    System.setProperty("hadoop.home.dir", System.getProperty("user.dir") + "\\winutils");
-
-    SparkConf conf = new SparkConf().setMaster("local[4]").setAppName("NetworkWordCount");
-    JavaStreamingContext jssc = new JavaStreamingContext(conf, Durations.milliseconds(100));
-    jssc.sparkContext().setLogLevel("ERROR");
-    jssc.sparkContext().getConf().set("mlib.sql.shuffle.partitions", "1");
-
     PathEventsListener.doJobOnEvent(
         Paths.get(LIVE_FEED_DIRECTORY),
         StandardWatchEventKinds.ENTRY_CREATE,
-        (contextPath) -> new Thread(() -> threadJobForEachCompany(contextPath, jssc)).start(),
+        (contextPath) ->
+            JavaProcess.exec(
+                JobForEachCompany.class, Collections.singletonList(contextPath.toString())),
         DoJobUntilStrategies.COMPANIES,
         true);
   }
 
-  private static void threadJobForEachCompany(Path companyDirPath, JavaStreamingContext jssc)
-      throws RuntimeException {
-    try {
-      final int slidingWindowWidth = PropertiesClass.getSlidingWindowWidth();
+  private static class JobForEachCompany {
+    public static void main(String... args) {
+      try {
+        System.setProperty("hadoop.home.dir", System.getProperty("user.dir") + "\\winutils");
 
-      // logs
-      MyFileWriter logWriter =
-          new MyFileWriter(
-              Paths.get(
-                  PropertiesClass.getStreamingLogDirectory()
-                      + companyDirPath.getFileName()
-                      + "//"
-                      + "streaming.log")); // close
-      // reading data news~
-      JavaDStream<String> stringJavaDStream =
-          jssc.receiverStream(new Receiver(companyDirPath.toString(), slidingWindowWidth));
-      JavaDStream<Item> schemaJavaDStream =
-          stringJavaDStream.map(
-              str -> {
-                String[] split = str.split(",");
-                // POJO
-                return new Item(
-                    split[0], split[1], Timestamp.valueOf(split[2]), Double.valueOf(split[3]));
-              });
+        SparkConf conf = new SparkConf().setMaster("local[4]").setAppName("Streaming layer");
+        JavaStreamingContext jssc = new JavaStreamingContext(conf, Durations.milliseconds(100));
+        jssc.sparkContext().setLogLevel("ERROR");
+        jssc.sparkContext().getConf().set("mlib.sql.shuffle.partitions", "1");
 
-      AtomicInteger streamingViewNumber = new AtomicInteger(0);
+        final Path companyDirPath = Paths.get(args[0]);
+        final int slidingWindowWidth = PropertiesClass.getSlidingWindowWidth();
 
-      schemaJavaDStream.foreachRDD(
-          rdd -> { // driver
-            if (rdd.count() == slidingWindowWidth) {
-              SparkSession sparkSession =
-                  SparkSession.builder().config(rdd.context().getConf()).getOrCreate();
-              JavaRDD<Item> sortedRDD = rdd.sortBy(Item::getDate, true, 1);
-              Dataset<Row> dataFrame = sparkSession.createDataFrame(sortedRDD, Item.class);
-              logWriter.println("dataFrame:");
-              logWriter.show(dataFrame);
-              // some data refactoring
-              Dataset<Row> labeledDataFrame =
-                  InDataRefactorUtils.reformatNotLabeledDataToLabeled(
-                      sparkSession, dataFrame, true);
-              logWriter.println("labeledDataFrame");
-              logWriter.show(labeledDataFrame);
-              Dataset<Row> windowedDataFrame =
-                  InDataRefactorUtils.reformatInDataToSlidingWindowLayout(
-                      sparkSession, labeledDataFrame, slidingWindowWidth);
-              logWriter.println("windowedDataFrame");
-              logWriter.show(windowedDataFrame);
+        // logs
+        MyFileWriter logWriter =
+            new MyFileWriter(
+                Paths.get(
+                    PropertiesClass.getStreamingLogDirectory()
+                        + companyDirPath.getFileName()
+                        + "//"
+                        + "streaming.log")); // close
+        // reading data news~
+        JavaDStream<String> stringJavaDStream =
+            jssc.receiverStream(new Receiver(companyDirPath.toString(), slidingWindowWidth));
+        JavaDStream<Item> schemaJavaDStream =
+            stringJavaDStream.map(
+                str -> {
+                  String[] split = str.split(",");
+                  // POJO
+                  return new Item(
+                      split[0], split[1], Timestamp.valueOf(split[2]), Double.valueOf(split[3]));
+                });
 
-              // mlib model
-              PipelineModel pipelineModel = null;
-              if (new File(
-                      PropertiesClass.getbatchMlModelDirectory() + companyDirPath.getFileName())
-                  .exists()) {
-                TimeUnit.SECONDS.sleep(1);
-                pipelineModel =
-                    PipelineModel.load(
-                        PropertiesClass.getbatchMlModelDirectory() + companyDirPath.getFileName());
-              }
+        AtomicInteger streamingViewNumber = new AtomicInteger(0);
 
-              if (pipelineModel == null) {
-                // writes real stock and prediciton to FEEDS
-                try (MyFileWriter streamingViewWriter =
-                    new MyFileWriter(
-                        Paths.get(
-                            PropertiesClass.getStreamingViewDirectory()
-                                + companyDirPath.getFileName()
-                                + "//"
-                                + "streaming_view"
-                                + streamingViewNumber.get()
-                                + ".txt"))) {
+        schemaJavaDStream.foreachRDD(
+            rdd -> { // driver
+              if (rdd.count() == slidingWindowWidth) {
+                SparkSession sparkSession =
+                    SparkSession.builder().config(rdd.context().getConf()).getOrCreate();
+                JavaRDD<Item> sortedRDD = rdd.sortBy(Item::getDate, true, 1);
+                Dataset<Row> dataFrame = sparkSession.createDataFrame(sortedRDD, Item.class);
+                logWriter.println("dataFrame:");
+                logWriter.show(dataFrame);
+                // some data refactoring
+                Dataset<Row> labeledDataFrame =
+                    InDataRefactorUtils.reformatNotLabeledDataToLabeled(
+                        sparkSession, dataFrame, true);
+                logWriter.println("labeledDataFrame");
+                logWriter.show(labeledDataFrame);
+                Dataset<Row> windowedDataFrame =
+                    InDataRefactorUtils.reformatInDataToSlidingWindowLayout(
+                        sparkSession, labeledDataFrame, slidingWindowWidth);
+                logWriter.println("windowedDataFrame");
+                logWriter.show(windowedDataFrame);
 
-                  List<Double> todayStocks = rdd.map(Item::getToday_stock).collect();
-                  Double realStock = todayStocks.get(todayStocks.size() - 1);
-
-                  streamingViewWriter.println(realStock + "," + "null");
+                // mlib model
+                PipelineModel pipelineModel = null;
+                if (new File(
+                        PropertiesClass.getbatchMlModelDirectory() + companyDirPath.getFileName())
+                    .exists()) {
+                  TimeUnit.SECONDS.sleep(1);
+                  pipelineModel =
+                      PipelineModel.load(
+                          PropertiesClass.getbatchMlModelDirectory()
+                              + companyDirPath.getFileName());
                 }
-              } else {
-                // prediction
-                Dataset<Row> predict =
-                    PredictionUtils.predict(pipelineModel, windowedDataFrame, logWriter);
-                String[] columns = predict.columns();
-                int labelIndex = Arrays.asList(columns).indexOf("stock_today");
-                int predictionIndex = Arrays.asList(columns).indexOf("prediction");
 
-                List<Row> rows = predict.collectAsList();
+                if (pipelineModel == null) {
+                  // writes real stock and prediciton to FEEDS
+                  try (MyFileWriter streamingViewWriter =
+                      new MyFileWriter(
+                          Paths.get(
+                              PropertiesClass.getStreamingViewDirectory()
+                                  + companyDirPath.getFileName()
+                                  + "//"
+                                  + "streaming_view"
+                                  + streamingViewNumber.get()
+                                  + ".txt"))) {
 
-                for (Row row : rows) logWriter.println(row.mkString(";"));
+                    List<Double> todayStocks = rdd.map(Item::getToday_stock).collect();
+                    Double realStock = todayStocks.get(todayStocks.size() - 1);
 
-                // real stock on today
-                double realStock =
-                    Double.parseDouble(rows.get(0).mkString(";").split(";")[labelIndex]);
-                // prediciton stock
-                double predictionStock =
-                    Double.parseDouble(rows.get(0).mkString(";").split(";")[predictionIndex]);
+                    streamingViewWriter.println(realStock + "," + "null");
+                  }
+                } else {
+                  // prediction
+                  Dataset<Row> predict =
+                      PredictionUtils.predict(pipelineModel, windowedDataFrame, logWriter);
+                  String[] columns = predict.columns();
+                  int labelIndex = Arrays.asList(columns).indexOf("stock_today");
+                  int predictionIndex = Arrays.asList(columns).indexOf("prediction");
 
-                // writes real stock and prediciton to FEEDS
-                try (MyFileWriter streamingViewWriter =
-                    new MyFileWriter(
-                        Paths.get(
-                            PropertiesClass.getStreamingViewDirectory()
-                                + companyDirPath.getFileName()
-                                + "//"
-                                + "streaming_view"
-                                + streamingViewNumber.get()
-                                + ".txt"))) {
-                  streamingViewWriter.println(realStock + "," + predictionStock);
+                  List<Row> rows = predict.collectAsList();
+
+                  for (Row row : rows) logWriter.println(row.mkString(";"));
+
+                  // real stock on today
+                  double realStock =
+                      Double.parseDouble(rows.get(0).mkString(";").split(";")[labelIndex]);
+                  // prediciton stock
+                  double predictionStock =
+                      Double.parseDouble(rows.get(0).mkString(";").split(";")[predictionIndex]);
+
+                  // writes real stock and prediciton to FEEDS
+                  try (MyFileWriter streamingViewWriter =
+                      new MyFileWriter(
+                          Paths.get(
+                              PropertiesClass.getStreamingViewDirectory()
+                                  + companyDirPath.getFileName()
+                                  + "//"
+                                  + "streaming_view"
+                                  + streamingViewNumber.get()
+                                  + ".txt"))) {
+                    streamingViewWriter.println(realStock + "," + predictionStock);
+                  }
+                  // debugging
+                  predict.show();
                 }
-                // debugging
-                predict.show();
+                System.out.println(
+                    companyDirPath.getFileName()
+                        + "\\"
+                        + "streaming_view"
+                        + streamingViewNumber.get()
+                        + ".txt");
+                streamingViewNumber.getAndIncrement();
               }
-              System.out.println("streaming_view" + streamingViewNumber.get() + ".txt");
-              streamingViewNumber.getAndIncrement();
-            }
-          });
+            });
 
-      jssc.start();
-      jssc.awaitTermination();
+        jssc.start();
+        jssc.awaitTermination();
 
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
